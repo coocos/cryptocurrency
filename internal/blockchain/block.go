@@ -31,6 +31,18 @@ func NewBlock(number int, previousHash string) *Block {
 	return &block
 }
 
+// GenesisBlock returns the fixed first block in the blockchain
+func GenesisBlock() *Block {
+	block := Block{
+		Number:       0,
+		Time:         time.Date(2021, time.May, 1, 6, 0, 0, 0, time.UTC),
+		PreviousHash: "",
+		Nonce:        4923246119299551551,
+		Hash:         "0000b049046735988b782ddd65ee6f49ec4d5501e84bb229b53d52dded20f5c0",
+	}
+	return &block
+}
+
 // AddTransaction adds a transaction to block
 func (b *Block) AddTransaction(transaction *Transaction) {
 	b.Transactions = append(b.Transactions, transaction)

@@ -13,11 +13,7 @@ type Blockchain struct {
 // NewBlockchain returns a new blockchain with a genesis block
 func NewBlockchain() *Blockchain {
 	blockchain := Blockchain{}
-
-	// FIXME: Genesis block is not valid
-	genesisBlock := NewBlock(0, "")
-	blockchain.AddBlock(genesisBlock)
-
+	blockchain.AddBlock(GenesisBlock())
 	return &blockchain
 }
 
