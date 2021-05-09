@@ -7,7 +7,6 @@ import (
 )
 
 func TestBlock(t *testing.T) {
-
 	t.Run("Test hashing a block", func(t *testing.T) {
 		block := NewBlock(0, []byte{})
 		block.Time = time.Date(2021, time.January, 1, 6, 0, 0, 0, time.UTC)
@@ -19,11 +18,9 @@ func TestBlock(t *testing.T) {
 			t.Errorf("Block hash %x differs from expected %s\n", hash, expectedHash)
 		}
 	})
-
 }
 
 func TestBlockChain(t *testing.T) {
-
 	t.Run("Test creating a blockchain", func(t *testing.T) {
 		chain := NewBlockchain()
 
@@ -31,7 +28,6 @@ func TestBlockChain(t *testing.T) {
 			t.Errorf("Blockchain has no genesis block\n")
 		}
 	})
-
 	t.Run("Test adding a block", func(t *testing.T) {
 		chain := NewBlockchain()
 
@@ -41,5 +37,4 @@ func TestBlockChain(t *testing.T) {
 			t.Errorf("Failed to add block to blockhain: %s\n", err)
 		}
 	})
-
 }

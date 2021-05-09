@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 
 	"github.com/coocos/cryptocurrency/internal/blockchain"
@@ -9,11 +8,8 @@ import (
 
 func main() {
 
-	block := blockchain.NewBlock(0, []byte{})
-	serialized, err := json.Marshal(block)
-	if err != nil {
-		log.Fatalf("Failed to serialize block to JSON: %s\n", err)
-	}
-	log.Println(string(serialized))
+	chain := blockchain.NewBlockchain()
+	chain.Mine()
+	log.Printf("%+v\n", chain.LastBlock())
 
 }
