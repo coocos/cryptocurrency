@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"bytes"
 	"errors"
 	"log"
 )
@@ -16,7 +15,7 @@ func NewBlockchain() *Blockchain {
 	blockchain := Blockchain{}
 
 	// FIXME: Genesis block is not valid
-	genesisBlock := NewBlock(0, []byte{})
+	genesisBlock := NewBlock(0, "")
 	blockchain.AddBlock(genesisBlock)
 
 	return &blockchain
@@ -41,7 +40,7 @@ func (b *Blockchain) AddBlock(block *Block) error {
 	if !block.IsValid() {
 		return errors.New("New block not valid according to proof-of-work")
 	}
-	if block.Number != previous.Number+1 || !bytes.Equal(block.PreviousHash, previous.Hash) {
+	if block.Number != previous.Number+1 || block.PreviousHash != previous.Hash {
 		return errors.New("New block does not follow the last block in blockchain")
 	}
 	b.chain = append(b.chain, block)
@@ -50,8 +49,9 @@ func (b *Blockchain) AddBlock(block *Block) error {
 
 // Mine executes the proof-of-work algorithm to mine for a valid block
 func (b *Blockchain) Mine() {
-	for {
-		block := NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash)
+	block := NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash)
+	for !block.IsValid() {
+		block = NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash)
 		if !block.IsValid() {
 			continue
 		}

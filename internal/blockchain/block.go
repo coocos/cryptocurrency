@@ -15,12 +15,12 @@ type Block struct {
 	Time         time.Time      `json:"time"`
 	Transactions []*Transaction `json:"transactions"`
 	Nonce        int64          `json:"nonce"`
-	PreviousHash []byte         `json:"previousHash"`
-	Hash         []byte         `json:"hash"`
+	PreviousHash string         `json:"previousHash"`
+	Hash         string         `json:"hash"`
 }
 
 // NewBlock creates a new block
-func NewBlock(number int, previousHash []byte) *Block {
+func NewBlock(number int, previousHash string) *Block {
 	block := Block{
 		Number:       number,
 		Time:         time.Now().UTC(),
@@ -37,10 +37,10 @@ func (b *Block) AddTransaction(transaction *Transaction) {
 }
 
 // ComputeHash computes the hash for the block
-func (b *Block) ComputeHash() []byte {
+func (b *Block) ComputeHash() string {
 	// Exclude the hash field itself when hashing the block
 	copy := b
-	copy.Hash = []byte{}
+	copy.Hash = ""
 	bytes, err := json.Marshal(copy)
 	if err != nil {
 		log.Fatalf("Failed to convert block to bytes: %s\n", err)
@@ -48,10 +48,10 @@ func (b *Block) ComputeHash() []byte {
 
 	hash := sha256.New()
 	hash.Write(bytes)
-	return hash.Sum(nil)
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // IsValid indicates if the block hash is valid
 func (b *Block) IsValid() bool {
-	return hex.EncodeToString(b.Hash)[:4] == "0000"
+	return b.Hash[:4] == "0000"
 }
