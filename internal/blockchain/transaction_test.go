@@ -1,53 +1,39 @@
 package blockchain
 
 import (
-	"crypto/ed25519"
-	"crypto/x509"
 	"testing"
+
+	"github.com/coocos/cryptocurrency/internal/keys"
 )
-
-type KeyPair struct {
-	privateKey ed25519.PrivateKey
-	publicKey  ed25519.PublicKey
-	address    []byte
-}
-
-func generateKeyPair() KeyPair {
-	publicKey, privateKey, _ := ed25519.GenerateKey(nil)
-	bytes, _ := x509.MarshalPKIXPublicKey(publicKey)
-	return KeyPair{
-		privateKey,
-		publicKey,
-		bytes,
-	}
-}
 
 func TestTransaction(t *testing.T) {
 	t.Run("Test valid signature", func(t *testing.T) {
-		senderKeyPair := generateKeyPair()
-		receiverKeyPair := generateKeyPair()
+
+		senderKeyPair := keys.NewKeyPair()
+		receiverKeyPair := keys.NewKeyPair()
 
 		transaction := Transaction{
-			Sender:   senderKeyPair.address,
-			Receiver: receiverKeyPair.address,
+			Sender:   senderKeyPair.EncodedPublicKey,
+			Receiver: receiverKeyPair.EncodedPublicKey,
 			Amount:   10,
 		}
-		transaction.Sign(senderKeyPair.privateKey)
+		transaction.Sign(senderKeyPair.PrivateKey)
 
 		if !transaction.ValidSignature() {
 			t.Errorf("Expected signature to be valid")
 		}
 	})
 	t.Run("Test invalid signature", func(t *testing.T) {
-		senderKeyPair := generateKeyPair()
-		receiverKeyPair := generateKeyPair()
+
+		senderKeyPair := keys.NewKeyPair()
+		receiverKeyPair := keys.NewKeyPair()
 
 		transaction := Transaction{
-			Sender:   senderKeyPair.address,
-			Receiver: receiverKeyPair.address,
+			Sender:   senderKeyPair.EncodedPublicKey,
+			Receiver: receiverKeyPair.EncodedPublicKey,
 			Amount:   10,
 		}
-		transaction.Sign(receiverKeyPair.privateKey)
+		transaction.Sign(receiverKeyPair.PrivateKey)
 
 		if transaction.ValidSignature() {
 			t.Errorf("Expected signature to be invalid")
