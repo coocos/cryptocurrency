@@ -51,8 +51,13 @@ func (b *Block) AddTransaction(transaction *Transaction) {
 // ComputeHash computes the hash for the block
 func (b *Block) ComputeHash() string {
 	// Exclude the hash field itself when hashing the block
-	copy := b
-	copy.Hash = ""
+	copy := Block{
+		Number:       b.Number,
+		Time:         b.Time,
+		Transactions: b.Transactions,
+		Nonce:        b.Nonce,
+		PreviousHash: b.PreviousHash,
+	}
 	bytes, err := json.Marshal(copy)
 	if err != nil {
 		log.Fatalf("Failed to convert block to bytes: %s\n", err)
