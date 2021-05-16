@@ -8,6 +8,7 @@ import (
 // Blockchain represents a full blockchain
 type Blockchain struct {
 	chain []*Block
+	pool  []*Transaction
 }
 
 // NewBlockchain returns a new blockchain with a genesis block
@@ -43,11 +44,24 @@ func (b *Blockchain) AddBlock(block *Block) error {
 	return nil
 }
 
+// AddTransaction adds transaction to the pool of available transactions to include in next block
+func (b *Blockchain) AddTransaction(transaction *Transaction) error {
+	if !transaction.ValidSignature() {
+		return errors.New("Transaction has invalid signature")
+	}
+	b.pool = append(b.pool, transaction)
+	return nil
+}
+
+func (b *Blockchain) transactionsForNextBlock() []*Transaction {
+	return b.pool
+}
+
 // Mine executes the proof-of-work algorithm to mine for a valid block
 func (b *Blockchain) Mine() {
-	block := NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash)
+	block := NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash, b.transactionsForNextBlock())
 	for !block.IsValid() {
-		block = NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash)
+		block = NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash, b.transactionsForNextBlock())
 		if !block.IsValid() {
 			continue
 		}

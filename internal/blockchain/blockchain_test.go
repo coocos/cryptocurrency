@@ -7,7 +7,7 @@ import (
 
 func TestBlock(t *testing.T) {
 	t.Run("Test hashing a block", func(t *testing.T) {
-		block := NewBlock(0, "")
+		block := NewBlock(0, "", nil)
 		block.Time = time.Date(2021, time.January, 1, 6, 0, 0, 0, time.UTC)
 
 		hash := block.ComputeHash()
@@ -30,9 +30,9 @@ func TestBlockChain(t *testing.T) {
 	t.Run("Test adding a valid block", func(t *testing.T) {
 		chain := NewBlockchain()
 
-		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash)
+		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, nil)
 		for !block.IsValid() {
-			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash)
+			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, nil)
 		}
 
 		err := chain.AddBlock(block)

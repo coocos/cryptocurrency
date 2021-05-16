@@ -20,10 +20,11 @@ type Block struct {
 }
 
 // NewBlock creates a new block
-func NewBlock(number int, previousHash string) *Block {
+func NewBlock(number int, previousHash string, transactions []*Transaction) *Block {
 	block := Block{
 		Number:       number,
 		Time:         time.Now().UTC(),
+		Transactions: transactions,
 		PreviousHash: previousHash,
 		Nonce:        rand.Int63(),
 	}
@@ -41,11 +42,6 @@ func GenesisBlock() *Block {
 		Hash:         "0000b049046735988b782ddd65ee6f49ec4d5501e84bb229b53d52dded20f5c0",
 	}
 	return &block
-}
-
-// AddTransaction adds a transaction to block
-func (b *Block) AddTransaction(transaction *Transaction) {
-	b.Transactions = append(b.Transactions, transaction)
 }
 
 // ComputeHash computes the hash for the block
