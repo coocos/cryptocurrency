@@ -9,7 +9,6 @@ import (
 
 // Transaction represents an individual transaction
 type Transaction struct {
-	Hash      []byte `json:"hash"`
 	Sender    []byte `json:"sender"`
 	Receiver  []byte `json:"receiver"`
 	Amount    int    `json:"amount"`
@@ -18,7 +17,7 @@ type Transaction struct {
 
 // ComputeHash sets the hash for transaction and returns it
 func (t *Transaction) ComputeHash() ([]byte, error) {
-	// Hash should not include the hash itself or the signature
+	// Hash should not include the signature
 	copy := Transaction{
 		Sender:   t.Sender,
 		Receiver: t.Receiver,
@@ -34,8 +33,7 @@ func (t *Transaction) ComputeHash() ([]byte, error) {
 	h.Write(bytes)
 	hash := h.Sum(nil)
 
-	t.Hash = hash
-	return t.Hash, nil
+	return hash, nil
 }
 
 // Sign signs the transaction using the given key and returns the signature
