@@ -3,6 +3,9 @@ package blockchain
 import (
 	"errors"
 	"log"
+	"os"
+
+	"github.com/coocos/cryptocurrency/internal/keys"
 )
 
 // Blockchain represents a full blockchain
@@ -54,7 +57,21 @@ func (b *Blockchain) AddTransaction(transaction *Transaction) error {
 }
 
 func (b *Blockchain) transactionsForNextBlock() []*Transaction {
-	return b.pool
+	// Transaction to reward the miner and increase money supply
+	privateKeyPath := os.Getenv("NODE_PRIVATE_KEY")
+	publicKeyPath := os.Getenv("NODE_PUBLIC_KEY")
+	keyPair, err := keys.LoadKeyPair(privateKeyPath, publicKeyPath)
+	if err != nil {
+		log.Fatalf("Failed to load key pair, unable to sign transactions: %v\n", err)
+	}
+	coinbaseTransaction := &Transaction{
+		Sender:   nil,
+		Receiver: keyPair.EncodedPublicKey,
+		Amount:   10,
+	}
+	coinbaseTransaction.Sign(keyPair.PrivateKey)
+
+	return append([]*Transaction{coinbaseTransaction}, b.pool...)
 }
 
 // Mine executes the proof-of-work algorithm to mine for a valid block
