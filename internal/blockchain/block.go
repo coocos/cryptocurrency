@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -15,12 +16,12 @@ type Block struct {
 	Time         time.Time      `json:"time"`
 	Transactions []*Transaction `json:"transactions"`
 	Nonce        int64          `json:"nonce"`
-	PreviousHash string         `json:"previousHash"`
-	Hash         string         `json:"hash"`
+	PreviousHash []byte         `json:"previousHash"`
+	Hash         []byte         `json:"hash"`
 }
 
 // NewBlock creates a new block
-func NewBlock(number int, previousHash string, transactions []*Transaction) *Block {
+func NewBlock(number int, previousHash []byte, transactions []*Transaction) *Block {
 	block := Block{
 		Number:       number,
 		Time:         time.Now().UTC(),
@@ -37,15 +38,19 @@ func GenesisBlock() *Block {
 	block := Block{
 		Number:       0,
 		Time:         time.Date(2021, time.May, 1, 6, 0, 0, 0, time.UTC),
-		PreviousHash: "",
-		Nonce:        4923246119299551551,
-		Hash:         "0000b049046735988b782ddd65ee6f49ec4d5501e84bb229b53d52dded20f5c0",
+		PreviousHash: nil,
+		Nonce:        3999606801082803789,
+	}
+	hash, _ := hex.DecodeString("000002be9afbfdaa977028a51d10bd590f9b56b03c3f570b8723e3809dc439ba")
+	block.Hash = hash
+	if !block.IsValid() {
+		log.Fatalln("Genesis block is not valid")
 	}
 	return &block
 }
 
 // ComputeHash computes the hash for the block
-func (b *Block) ComputeHash() string {
+func (b *Block) ComputeHash() []byte {
 	// Exclude the hash field itself when hashing the block
 	copy := Block{
 		Number:       b.Number,
@@ -56,15 +61,16 @@ func (b *Block) ComputeHash() string {
 	}
 	bytes, err := json.Marshal(copy)
 	if err != nil {
-		log.Fatalf("Failed to convert block to bytes: %s\n", err)
+		log.Fatalf("Failed to hash block: %v\n", err)
 	}
 
 	hash := sha256.New()
 	hash.Write(bytes)
-	return hex.EncodeToString(hash.Sum(nil))
+	return hash.Sum(nil)
 }
 
 // IsValid indicates if the block hash is valid
 func (b *Block) IsValid() bool {
-	return b.Hash[:4] == "0000"
+	return bytes.Equal(b.ComputeHash(), b.Hash) &&
+		hex.EncodeToString(b.Hash)[:4] == "0000"
 }

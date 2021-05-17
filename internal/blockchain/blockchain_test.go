@@ -1,19 +1,21 @@
 package blockchain
 
 import (
+	"bytes"
+	"encoding/hex"
 	"testing"
 	"time"
 )
 
 func TestBlock(t *testing.T) {
 	t.Run("Test hashing a block", func(t *testing.T) {
-		block := NewBlock(0, "", nil)
+		block := NewBlock(0, nil, nil)
 		block.Time = time.Date(2021, time.January, 1, 6, 0, 0, 0, time.UTC)
 
 		hash := block.ComputeHash()
-		expectedHash := "5bf97525874b93320a47e21030dbc117696121f0fd36a9afdfcdd0fddf817e26"
+		expectedHash, _ := hex.DecodeString("585d1618d011fcf9bb20ae920ebd29f69caa27f62a0635043e1d4d659696b883")
 
-		if hash != expectedHash {
+		if !bytes.Equal(hash, expectedHash) {
 			t.Errorf("Block hash %s differs from expected %s\n", hash, expectedHash)
 		}
 	})

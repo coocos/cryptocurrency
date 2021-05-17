@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"bytes"
 	"errors"
 	"log"
 	"os"
@@ -40,7 +41,7 @@ func (b *Blockchain) AddBlock(block *Block) error {
 	if !block.IsValid() {
 		return errors.New("New block not valid according to proof-of-work")
 	}
-	if block.Number != previous.Number+1 || block.PreviousHash != previous.Hash {
+	if block.Number != previous.Number+1 || !bytes.Equal(block.PreviousHash, previous.Hash) {
 		return errors.New("New block does not follow the last block in blockchain")
 	}
 	b.chain = append(b.chain, block)
