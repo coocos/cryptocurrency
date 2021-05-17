@@ -77,14 +77,12 @@ func (b *Blockchain) transactionsForNextBlock() []*Transaction {
 
 // Mine executes the proof-of-work algorithm to mine for a valid block
 func (b *Blockchain) Mine() {
-	block := NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash, b.transactionsForNextBlock())
-	for !block.IsValid() {
-		block = NewBlock(b.LastBlock().Number+1, b.LastBlock().PreviousHash, b.transactionsForNextBlock())
+	for {
+		block := NewBlock(b.LastBlock().Number+1, b.LastBlock().Hash, b.transactionsForNextBlock())
 		if !block.IsValid() {
 			continue
 		}
 		log.Printf("Found valid block: %+v\n", block)
 		b.AddBlock(block)
-		break
 	}
 }
