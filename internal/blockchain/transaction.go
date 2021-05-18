@@ -11,12 +11,12 @@ import (
 type Transaction struct {
 	Sender    []byte `json:"sender"`
 	Receiver  []byte `json:"receiver"`
-	Amount    int    `json:"amount"`
+	Amount    uint   `json:"amount"`
 	Signature []byte `json:"signature"`
 }
 
 // NewTransaction returns a new unsigned transaction
-func NewTransaction(sender []byte, receiver []byte, amount int) *Transaction {
+func NewTransaction(sender []byte, receiver []byte, amount uint) *Transaction {
 	// FIXME: Validate that both sender and receiver are proper public keys
 	return &Transaction{
 		sender,

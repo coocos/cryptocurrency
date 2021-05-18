@@ -8,16 +8,16 @@ import (
 
 // Accounts represents all the accounts within the blockchain
 type Accounts struct {
-	accounts map[string]int
+	accounts map[string]uint
 }
 
 // NewAccounts returns an empty Accounts struct
 func NewAccounts() *Accounts {
-	return &Accounts{make(map[string]int)}
+	return &Accounts{make(map[string]uint)}
 }
 
 // BalanceFor returns the amount of coins held in account
-func (a *Accounts) BalanceFor(account []byte) (int, error) {
+func (a *Accounts) BalanceFor(account []byte) (uint, error) {
 	accountId := base64.StdEncoding.EncodeToString(account)
 	balance, exists := a.accounts[accountId]
 	if !exists {
@@ -27,8 +27,7 @@ func (a *Accounts) BalanceFor(account []byte) (int, error) {
 }
 
 // Add adds a number of coins to the given account
-func (a *Accounts) Add(account []byte, amount int) {
-	// FIXME: Use unsigned integer for amount instead so you can catch negative transactions
+func (a *Accounts) Add(account []byte, amount uint) {
 	accountId := base64.StdEncoding.EncodeToString(account)
 	_, exists := a.accounts[accountId]
 	if !exists {
@@ -38,13 +37,13 @@ func (a *Accounts) Add(account []byte, amount int) {
 }
 
 // Subtract removes a number of coins from the given account
-func (a *Accounts) Subtract(account []byte, amount int) error {
+func (a *Accounts) Subtract(account []byte, amount uint) error {
 	accountId := base64.StdEncoding.EncodeToString(account)
 	balance, exists := a.accounts[accountId]
 	if !exists {
 		return errors.New(fmt.Sprintf("Account %v not found", accountId))
 	}
-	if balance-amount < 0 {
+	if amount > balance {
 		return errors.New(fmt.Sprintf("Account %v has insufficient balance", accountId))
 	}
 	a.accounts[accountId] -= amount
