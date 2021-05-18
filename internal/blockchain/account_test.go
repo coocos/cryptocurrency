@@ -50,10 +50,12 @@ func TestAccount(t *testing.T) {
 		coinbaseTransaction := NewTransaction(nil, minerAccount.EncodedPublicKey, 10)
 		coinbaseTransaction.Sign(minerAccount.PrivateKey)
 		chain := NewBlockchain()
-		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []*Transaction{coinbaseTransaction})
+		nonce := 0
+		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []*Transaction{coinbaseTransaction}, nonce)
 		// FIXME: Instead of mining a valid block, use deterministic key generation and hardcode the block hash
 		for !block.IsValid() {
-			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []*Transaction{coinbaseTransaction})
+			nonce += 1
+			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []*Transaction{coinbaseTransaction}, nonce)
 		}
 		err := chain.AddBlock(block)
 		if err != nil {

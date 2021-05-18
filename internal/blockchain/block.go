@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log"
-	"math/rand"
 	"time"
 )
 
@@ -15,19 +14,19 @@ type Block struct {
 	Number       int            `json:"number"`
 	Time         time.Time      `json:"time"`
 	Transactions []*Transaction `json:"transactions"`
-	Nonce        int64          `json:"nonce"`
+	Nonce        int            `json:"nonce"`
 	PreviousHash []byte         `json:"previousHash"`
 	Hash         []byte         `json:"hash"`
 }
 
 // NewBlock creates a new block
-func NewBlock(number int, previousHash []byte, transactions []*Transaction) *Block {
+func NewBlock(number int, previousHash []byte, transactions []*Transaction, nonce int) *Block {
 	block := Block{
 		Number:       number,
 		Time:         time.Now().UTC(),
 		Transactions: transactions,
 		PreviousHash: previousHash,
-		Nonce:        rand.Int63(),
+		Nonce:        nonce,
 	}
 	block.Hash = block.ComputeHash()
 	return &block
