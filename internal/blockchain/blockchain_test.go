@@ -9,14 +9,16 @@ import (
 
 func TestBlock(t *testing.T) {
 	t.Run("Test hashing a block", func(t *testing.T) {
-		block := NewBlock(0, nil, nil)
+		genesisBlock := GenesisBlock()
+		block := NewBlock(genesisBlock.Number+1, genesisBlock.Hash, nil)
 		block.Time = time.Date(2021, time.January, 1, 6, 0, 0, 0, time.UTC)
+		block.Nonce = 1
 
 		hash := block.ComputeHash()
-		expectedHash, _ := hex.DecodeString("585d1618d011fcf9bb20ae920ebd29f69caa27f62a0635043e1d4d659696b883")
+		expectedHash, _ := hex.DecodeString("0323204fb3d384837511fef3da59fc5324655e0376a2d3e624c11d418b873a45")
 
 		if !bytes.Equal(hash, expectedHash) {
-			t.Errorf("Block hash %s differs from expected %s\n", hash, expectedHash)
+			t.Errorf("Block hash %x differs from expected %x\n", hash, expectedHash)
 		}
 	})
 }
