@@ -15,6 +15,17 @@ type Transaction struct {
 	Signature []byte `json:"signature"`
 }
 
+// NewTransaction returns a new unsigned transaction
+func NewTransaction(sender []byte, receiver []byte, amount int) *Transaction {
+	// FIXME: Validate that both sender and receiver are proper public keys
+	return &Transaction{
+		sender,
+		receiver,
+		amount,
+		nil,
+	}
+}
+
 // ComputeHash sets the hash for transaction and returns it
 func (t *Transaction) ComputeHash() ([]byte, error) {
 	// Hash should not include the signature
