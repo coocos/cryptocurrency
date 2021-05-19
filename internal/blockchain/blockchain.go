@@ -75,8 +75,8 @@ func (b *Blockchain) transactionsForNextBlock() []*Transaction {
 	return append([]*Transaction{coinbaseTransaction}, b.pool...)
 }
 
-// Mine executes the proof-of-work algorithm to mine for a valid block
-func (b *Blockchain) Mine() {
+// MineBlock mines a new valid block with transactions from the mempool
+func (b *Blockchain) MineBlock() {
 	nonce := 0
 	for {
 		block := NewBlock(b.LastBlock().Number+1, b.LastBlock().Hash, b.transactionsForNextBlock(), nonce)
@@ -86,6 +86,6 @@ func (b *Blockchain) Mine() {
 		}
 		log.Printf("Found valid block: %+v\n", block)
 		b.AddBlock(block)
-		nonce = 0
+		break
 	}
 }

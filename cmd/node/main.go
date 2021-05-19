@@ -7,6 +7,9 @@ import (
 func main() {
 
 	chain := blockchain.NewBlockchain()
-	chain.Mine()
+
+	for {
+		chain.MineBlock()
+	}
 
 }
