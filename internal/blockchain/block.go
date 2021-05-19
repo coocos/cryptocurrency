@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 )
@@ -17,6 +18,11 @@ type Block struct {
 	Nonce        int            `json:"nonce"`
 	PreviousHash []byte         `json:"previousHash"`
 	Hash         []byte         `json:"hash"`
+}
+
+// String returns the string representation of a block
+func (b Block) String() string {
+	return fmt.Sprintf("Block %d %x transactions: %d", b.Number, b.Hash, len(b.Transactions))
 }
 
 // NewBlock creates a new block

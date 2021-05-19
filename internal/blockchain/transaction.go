@@ -4,7 +4,9 @@ import (
 	"crypto/ed25519"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 )
 
 // Transaction represents an individual transaction
@@ -13,6 +15,16 @@ type Transaction struct {
 	Receiver  []byte `json:"receiver"`
 	Amount    uint   `json:"amount"`
 	Signature []byte `json:"signature"`
+}
+
+// String returns the string representation of a transaction
+func (t Transaction) String() string {
+	sender := base64.StdEncoding.EncodeToString(t.Sender)
+	receiver := base64.StdEncoding.EncodeToString(t.Receiver)
+	if t.Sender == nil {
+		return fmt.Sprintf("Transaction: %d coins to miner %s", t.Amount, receiver)
+	}
+	return fmt.Sprintf("Transaction: %d coins from %s to %s", t.Amount, sender, receiver)
 }
 
 // NewTransaction returns a new unsigned transaction
