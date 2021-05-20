@@ -59,6 +59,20 @@ func (b *Blockchain) AddTransaction(transaction Transaction) error {
 	return nil
 }
 
+func (b *Blockchain) filterValidTransactions() []Transaction {
+	validTransactions := make([]Transaction, 0)
+	accounts := ReadAccounts(b)
+	for _, transaction := range b.pool {
+		if err := accounts.Subtract(transaction.Sender, transaction.Amount); err != nil {
+			log.Printf("Rejecting transaction: %v\n", transaction)
+			continue
+		}
+		accounts.Add(transaction.Receiver, transaction.Amount)
+		validTransactions = append(validTransactions, transaction)
+	}
+	return validTransactions
+}
+
 func (b *Blockchain) transactionsForNextBlock() []Transaction {
 	// Transaction to reward the miner and increase money supply
 	privateKeyPath := os.Getenv("NODE_PRIVATE_KEY")
@@ -73,8 +87,7 @@ func (b *Blockchain) transactionsForNextBlock() []Transaction {
 		Amount:   10,
 	}
 	coinbaseTransaction.Sign(keyPair.PrivateKey)
-
-	return append([]Transaction{coinbaseTransaction}, b.pool...)
+	return append([]Transaction{coinbaseTransaction}, b.filterValidTransactions()...)
 }
 
 // ProofOfWorkRequest is a request to mine a new block
