@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"log"
+	"math"
 	"os"
+	"runtime"
 
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
@@ -12,7 +14,7 @@ import (
 // Blockchain represents a full blockchain
 type Blockchain struct {
 	chain []*Block
-	pool  []*Transaction
+	pool  []Transaction
 }
 
 // NewBlockchain returns a new blockchain with a genesis block
@@ -49,7 +51,7 @@ func (b *Blockchain) AddBlock(block *Block) error {
 }
 
 // AddTransaction adds transaction to the pool of available transactions to include in next block
-func (b *Blockchain) AddTransaction(transaction *Transaction) error {
+func (b *Blockchain) AddTransaction(transaction Transaction) error {
 	if !transaction.ValidSignature() {
 		return errors.New("Transaction has invalid signature")
 	}
@@ -57,7 +59,7 @@ func (b *Blockchain) AddTransaction(transaction *Transaction) error {
 	return nil
 }
 
-func (b *Blockchain) transactionsForNextBlock() []*Transaction {
+func (b *Blockchain) transactionsForNextBlock() []Transaction {
 	// Transaction to reward the miner and increase money supply
 	privateKeyPath := os.Getenv("NODE_PRIVATE_KEY")
 	publicKeyPath := os.Getenv("NODE_PUBLIC_KEY")
@@ -65,27 +67,54 @@ func (b *Blockchain) transactionsForNextBlock() []*Transaction {
 	if err != nil {
 		log.Fatalf("Failed to load key pair, unable to sign transactions: %v\n", err)
 	}
-	coinbaseTransaction := &Transaction{
+	coinbaseTransaction := Transaction{
 		Sender:   nil,
 		Receiver: keyPair.EncodedPublicKey,
 		Amount:   10,
 	}
 	coinbaseTransaction.Sign(keyPair.PrivateKey)
 
-	return append([]*Transaction{coinbaseTransaction}, b.pool...)
+	return append([]Transaction{coinbaseTransaction}, b.pool...)
+}
+
+// ProofOfWorkRequest is a request to mine a new block
+type ProofOfWorkRequest struct {
+	blockNumber       int
+	previousBlockHash []byte
+	blockTransactions []Transaction
 }
 
 // MineBlock mines a new valid block with transactions from the mempool
 func (b *Blockchain) MineBlock() {
-	nonce := 0
-	for {
-		block := NewBlock(b.LastBlock().Number+1, b.LastBlock().Hash, b.transactionsForNextBlock(), nonce)
-		if !block.IsValid() {
-			nonce += 1
-			continue
+	nonces := make(chan int)
+	validBlock := make(chan Block, runtime.NumCPU())
+
+	// Create a worker per core to mine for a valid block
+	for worker := 0; worker < runtime.NumCPU(); worker++ {
+		go func(nonces <-chan int, validBlock chan<- Block, request ProofOfWorkRequest) {
+			for {
+				nonce, more := <-nonces
+				if !more {
+					return
+				}
+				block := NewBlock(request.blockNumber, request.previousBlockHash, request.blockTransactions, nonce)
+				if block.IsValid() {
+					validBlock <- *block
+					return
+				}
+			}
+		}(nonces, validBlock, ProofOfWorkRequest{b.LastBlock().Number + 1, b.LastBlock().Hash, b.transactionsForNextBlock()})
+	}
+
+	// Send incremental nonces to workers until a valid block is found
+	for nonce := 0; nonce < math.MaxInt64; nonce++ {
+		select {
+		case block := <-validBlock:
+			log.Printf("Found valid block: %+v\n", block)
+			b.AddBlock(&block)
+			close(nonces)
+			return
+		case nonces <- nonce:
 		}
-		log.Printf("Found valid block: %+v\n", block)
-		b.AddBlock(block)
-		break
 	}
 }

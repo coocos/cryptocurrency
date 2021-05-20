@@ -12,12 +12,12 @@ import (
 
 // Block is an individual block in the blockchain
 type Block struct {
-	Number       int            `json:"number"`
-	Time         time.Time      `json:"time"`
-	Transactions []*Transaction `json:"transactions"`
-	Nonce        int            `json:"nonce"`
-	PreviousHash []byte         `json:"previousHash"`
-	Hash         []byte         `json:"hash"`
+	Number       int           `json:"number"`
+	Time         time.Time     `json:"time"`
+	Transactions []Transaction `json:"transactions"`
+	Nonce        int           `json:"nonce"`
+	PreviousHash []byte        `json:"previousHash"`
+	Hash         []byte        `json:"hash"`
 }
 
 // String returns the string representation of a block
@@ -26,7 +26,7 @@ func (b Block) String() string {
 }
 
 // NewBlock creates a new block
-func NewBlock(number int, previousHash []byte, transactions []*Transaction, nonce int) *Block {
+func NewBlock(number int, previousHash []byte, transactions []Transaction, nonce int) *Block {
 	block := Block{
 		Number:       number,
 		Time:         time.Now().UTC(),
