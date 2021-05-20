@@ -123,8 +123,11 @@ func (b *Blockchain) MineBlock() {
 	for nonce := 0; nonce < math.MaxInt64; nonce++ {
 		select {
 		case block := <-validBlock:
-			log.Printf("Found valid block: %+v\n", block)
 			b.AddBlock(&block)
+			log.Printf("Found valid block: %+v\n", block)
+			for _, transaction := range block.Transactions {
+				log.Println(transaction)
+			}
 			close(nonces)
 			return
 		case nonces <- nonce:
