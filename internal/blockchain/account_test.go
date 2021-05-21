@@ -8,7 +8,7 @@ import (
 
 func TestAccount(t *testing.T) {
 	t.Run("Test adding to account", func(t *testing.T) {
-		account := keys.NewKeyPair().EncodedPrivateKey
+		account := keys.NewKeyPair().EncodedPublicKey
 		accounts := NewAccounts()
 		accounts.Add(account, 10)
 
@@ -21,7 +21,7 @@ func TestAccount(t *testing.T) {
 		}
 	})
 	t.Run("Test subtracting from account", func(t *testing.T) {
-		account := keys.NewKeyPair().EncodedPrivateKey
+		account := keys.NewKeyPair().EncodedPublicKey
 		accounts := NewAccounts()
 		accounts.Add(account, 10)
 		err := accounts.Subtract(account, 5)
@@ -49,7 +49,7 @@ func TestAccount(t *testing.T) {
 		minerAccount := keys.NewKeyPair()
 		coinbaseTransaction := NewTransaction(nil, minerAccount.EncodedPublicKey, 10)
 		coinbaseTransaction.Sign(minerAccount.PrivateKey)
-		chain := NewBlockchain()
+		chain := NewBlockchain(nil)
 		nonce := 0
 		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []Transaction{*coinbaseTransaction}, nonce)
 		// FIXME: Instead of mining a valid block, use deterministic key generation and hardcode the block hash
