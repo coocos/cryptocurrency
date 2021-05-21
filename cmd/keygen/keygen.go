@@ -27,7 +27,7 @@ func writeKeyPairToFile(keyPair keys.KeyPair, options Options) error {
 	if err := os.WriteFile(options.privateKeyFile, keyPair.EncodedPrivateKey, 0600); err != nil {
 		return err
 	}
-	if err := os.WriteFile(options.publicKeyFile, keyPair.EncodedPublicKey, 0600); err != nil {
+	if err := os.WriteFile(options.publicKeyFile, keyPair.EncodedPublicKey, 0644); err != nil {
 		return err
 	}
 	return nil
