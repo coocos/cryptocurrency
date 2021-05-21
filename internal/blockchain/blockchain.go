@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"math"
-	"os"
 	"runtime"
 
 	"github.com/coocos/cryptocurrency/internal/keys"
@@ -13,13 +12,20 @@ import (
 
 // Blockchain represents a full blockchain
 type Blockchain struct {
-	chain []*Block
-	pool  []Transaction
+	chain   []*Block
+	pool    []Transaction
+	keyPair *keys.KeyPair
 }
 
 // NewBlockchain returns a new blockchain with a genesis block
-func NewBlockchain() *Blockchain {
-	blockchain := Blockchain{}
+func NewBlockchain(keyPair *keys.KeyPair) *Blockchain {
+	if keyPair == nil {
+		log.Println("No key pair given - generating a new one")
+		keyPair = keys.NewKeyPair()
+	}
+	blockchain := Blockchain{
+		keyPair: keyPair,
+	}
 	blockchain.AddBlock(GenesisBlock())
 	return &blockchain
 }
@@ -74,19 +80,11 @@ func (b *Blockchain) filterValidTransactions() []Transaction {
 }
 
 func (b *Blockchain) transactionsForNextBlock() []Transaction {
-	// Transaction to reward the miner and increase money supply
-	privateKeyPath := os.Getenv("NODE_PRIVATE_KEY")
-	publicKeyPath := os.Getenv("NODE_PUBLIC_KEY")
-	keyPair, err := keys.LoadKeyPair(privateKeyPath, publicKeyPath)
-	if err != nil {
-		log.Fatalf("Failed to load key pair, unable to sign transactions: %v\n", err)
-	}
 	coinbaseTransaction := Transaction{
 		Sender:   nil,
-		Receiver: keyPair.EncodedPublicKey,
+		Receiver: b.keyPair.EncodedPublicKey,
 		Amount:   10,
 	}
-	coinbaseTransaction.Sign(keyPair.PrivateKey)
 	return append([]Transaction{coinbaseTransaction}, b.filterValidTransactions()...)
 }
 
