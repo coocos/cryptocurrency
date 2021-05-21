@@ -1,17 +1,29 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"os"
 
 	"github.com/coocos/cryptocurrency/internal/blockchain"
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
 
-func minerKeyPair() *keys.KeyPair {
-	privateKeyPath := os.Getenv("NODE_PRIVATE_KEY")
-	publicKeyPath := os.Getenv("NODE_PUBLIC_KEY")
-	keyPair, err := keys.LoadKeyPair(privateKeyPath, publicKeyPath)
+// Options passed as CLI flags
+type Options struct {
+	privateKey string
+	publicKey  string
+}
+
+func parseArgs() Options {
+	options := Options{}
+	flag.StringVar(&options.privateKey, "private", "private.key", "private key path")
+	flag.StringVar(&options.publicKey, "public", "public.key", "public key path")
+	flag.Parse()
+	return options
+}
+
+func loadMinerKeyPair(options Options) *keys.KeyPair {
+	keyPair, err := keys.LoadKeyPair(options.privateKey, options.publicKey)
 	if err != nil {
 		log.Fatalf("Failed to load key pair, unable to sign transactions: %v\n", err)
 
@@ -20,10 +32,10 @@ func minerKeyPair() *keys.KeyPair {
 }
 
 func main() {
+	options := parseArgs()
 
-	chain := blockchain.NewBlockchain(minerKeyPair())
+	chain := blockchain.NewBlockchain(loadMinerKeyPair(options))
 	for {
 		chain.MineBlock()
 	}
-
 }
