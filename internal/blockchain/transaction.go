@@ -70,8 +70,18 @@ func (t *Transaction) Sign(privateKey ed25519.PrivateKey) ([]byte, error) {
 	return signature, nil
 }
 
+// IsCoinBase tells whether the transaction is a coinbase transaction
+func (t *Transaction) IsCoinbase() bool {
+	return t.Sender == nil && t.Receiver != nil && t.Amount == 10
+}
+
 // ValidSignature indicates whether the transaction signature is valid
 func (t *Transaction) ValidSignature() bool {
+	// Coinbase transactions do not have signatures
+	if t.Sender == nil {
+		return t.IsCoinbase()
+	}
+
 	parsedKey, err := x509.ParsePKIXPublicKey(t.Sender)
 	if err != nil {
 		return false

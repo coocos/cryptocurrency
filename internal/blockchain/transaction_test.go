@@ -8,7 +8,6 @@ import (
 
 func TestTransaction(t *testing.T) {
 	t.Run("Test valid signature", func(t *testing.T) {
-
 		senderKeyPair := keys.NewKeyPair()
 		receiverKeyPair := keys.NewKeyPair()
 
@@ -24,7 +23,6 @@ func TestTransaction(t *testing.T) {
 		}
 	})
 	t.Run("Test invalid signature", func(t *testing.T) {
-
 		senderKeyPair := keys.NewKeyPair()
 		receiverKeyPair := keys.NewKeyPair()
 
@@ -37,6 +35,21 @@ func TestTransaction(t *testing.T) {
 
 		if transaction.ValidSignature() {
 			t.Errorf("Expected signature to be invalid")
+		}
+	})
+	t.Run("Test identifying coinbase transactions", func(t *testing.T) {
+		minerKeyPair := keys.NewKeyPair()
+
+		transaction := Transaction{
+			Sender:   nil,
+			Receiver: minerKeyPair.EncodedPublicKey,
+			Amount:   10,
+		}
+		if !transaction.IsCoinbase() {
+			t.Error("Coinbase transaction not identified as coinbase transaction")
+		}
+		if !transaction.ValidSignature() {
+			t.Error("Coinbase transactions signatures are always considered valid")
 		}
 	})
 }
