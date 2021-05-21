@@ -122,9 +122,9 @@ func (b *Blockchain) MineBlock() {
 		select {
 		case block := <-validBlock:
 			b.AddBlock(&block)
-			log.Printf("Found valid block: %+v\n", block)
+			log.Printf("🎉 Found valid block: %+v\n", block)
 			for _, transaction := range block.Transactions {
-				log.Println(transaction)
+				log.Printf("💰 %v\n", transaction)
 			}
 			close(nonces)
 			return
