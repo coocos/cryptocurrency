@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
@@ -15,18 +14,6 @@ func TestBlockChain(t *testing.T) {
 
 		if chain.LastBlock() == nil {
 			t.Errorf("Blockchain has no genesis block\n")
-		}
-	})
-	t.Run("Test adding a new valid block", func(t *testing.T) {
-		chain := NewBlockchain(nil)
-
-		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, nil, 14859)
-		block.Time = time.Date(2021, time.May, 1, 6, 0, 0, 0, time.UTC)
-		block.Hash = block.ComputeHash()
-
-		err := chain.AddBlock(block)
-		if err != nil {
-			t.Errorf("Failed to add block to blockhain: %s\n", err)
 		}
 	})
 	t.Run("Test that mined block includes coinbase transaction to miner", func(t *testing.T) {

@@ -74,8 +74,12 @@ func (b *Block) ComputeHash() []byte {
 	return hash.Sum(nil)
 }
 
-// IsValid indicates if the block hash is valid
+// IsValid indicates if the block is valid
 func (b *Block) IsValid() bool {
-	return bytes.Equal(b.ComputeHash(), b.Hash) &&
+	// Genesis block is always valid
+	if b.Number == 0 {
+		return true
+	}
+	return len(b.Transactions) >= 1 && b.Transactions[0].IsCoinbase() && bytes.Equal(b.ComputeHash(), b.Hash) &&
 		hex.EncodeToString(b.Hash)[:4] == "0000"
 }
