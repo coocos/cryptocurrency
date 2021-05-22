@@ -9,16 +9,18 @@ import (
 )
 
 func TestBlockChain(t *testing.T) {
+
+	miner := keys.NewKeyPair()
+	receiver := keys.NewKeyPair()
+
 	t.Run("Test that blockchain always includes genesis block", func(t *testing.T) {
 		chain := NewBlockchain(nil)
 
 		if chain.LastBlock() == nil {
-			t.Errorf("Blockchain has no genesis block\n")
+			t.Error("Blockchain has no genesis block")
 		}
 	})
 	t.Run("Test that mined block includes coinbase transaction to miner", func(t *testing.T) {
-		miner := keys.NewKeyPair()
-
 		chain := NewBlockchain(miner)
 		chain.MineBlock()
 
@@ -40,10 +42,7 @@ func TestBlockChain(t *testing.T) {
 			t.Error("Coinbase transaction should be 10 coins")
 		}
 	})
-	t.Run("Test that next mined block includes transaction", func(t *testing.T) {
-		miner := keys.NewKeyPair()
-		receiver := keys.NewKeyPair()
-
+	t.Run("Test that mined block includes transaction", func(t *testing.T) {
 		// Mine one block so that miner has some coins
 		chain := NewBlockchain(miner)
 		chain.MineBlock()
@@ -61,6 +60,23 @@ func TestBlockChain(t *testing.T) {
 		}
 		if !reflect.DeepEqual(chain.LastBlock().Transactions[1], *transaction) {
 			t.Error("Included transaction does not match submitted transaction")
+		}
+	})
+	t.Run("Test that mined block does not include overspent transaction", func(t *testing.T) {
+		// Mine one block so that miner has some coins
+		chain := NewBlockchain(miner)
+		chain.MineBlock()
+
+		// Mine next block and send coins from miner to receiver
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 15)
+		transaction.Sign(miner.PrivateKey)
+		if err := chain.AddTransaction(*transaction); err != nil {
+			t.Errorf("Failed to add transaction to blockchain: %v", err)
+		}
+		chain.MineBlock()
+
+		if len(chain.LastBlock().Transactions) > 1 {
+			t.Fatal("Invalid transaction was included in block")
 		}
 	})
 }
