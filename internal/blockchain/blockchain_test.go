@@ -47,7 +47,7 @@ func TestBlockChain(t *testing.T) {
 		chain := NewBlockchain(miner)
 		chain.MineBlock()
 
-		// Mine next block and send coins from miner to receiver
+		// Mine next block to send coins from miner to receiver
 		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5)
 		transaction.Sign(miner.PrivateKey)
 		if err := chain.AddTransaction(*transaction); err != nil {
@@ -67,7 +67,7 @@ func TestBlockChain(t *testing.T) {
 		chain := NewBlockchain(miner)
 		chain.MineBlock()
 
-		// Mine next block and send coins from miner to receiver
+		// Mine next block to send coins from miner to receiver
 		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 15)
 		transaction.Sign(miner.PrivateKey)
 		if err := chain.AddTransaction(*transaction); err != nil {
@@ -77,6 +77,25 @@ func TestBlockChain(t *testing.T) {
 
 		if len(chain.LastBlock().Transactions) > 1 {
 			t.Fatal("Invalid transaction was included in block")
+		}
+	})
+	t.Run("Test that spent transaction is not included in the next block", func(t *testing.T) {
+		// Mine one block so that miner has some coins
+		chain := NewBlockchain(miner)
+		chain.MineBlock()
+
+		// Mine next block to send coins from miner to receiver
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5)
+		transaction.Sign(miner.PrivateKey)
+		if err := chain.AddTransaction(*transaction); err != nil {
+			t.Errorf("Failed to add transaction to blockchain: %v", err)
+		}
+		chain.MineBlock()
+
+		// Mine another block to see that it does include the spent transaction
+		chain.MineBlock()
+		if len(chain.LastBlock().Transactions) > 1 {
+			t.Error("Block included an already spent transaction")
 		}
 	})
 }

@@ -57,7 +57,7 @@ func TestAccount(t *testing.T) {
 			nonce += 1
 			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []Transaction{*coinbaseTransaction}, nonce)
 		}
-		err := chain.AddBlock(block)
+		err := chain.addBlock(block)
 		if err != nil {
 			t.Errorf("Failed to add block to blockchain: %v\n", err)
 		}

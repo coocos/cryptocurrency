@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"log"
 	"math"
@@ -13,7 +14,7 @@ import (
 // Blockchain represents a full blockchain
 type Blockchain struct {
 	chain   []*Block
-	pool    []Transaction
+	pool    map[string]Transaction
 	keyPair *keys.KeyPair
 }
 
@@ -25,8 +26,9 @@ func NewBlockchain(keyPair *keys.KeyPair) *Blockchain {
 	}
 	blockchain := Blockchain{
 		keyPair: keyPair,
+		pool:    make(map[string]Transaction),
 	}
-	blockchain.AddBlock(GenesisBlock())
+	blockchain.addBlock(GenesisBlock())
 	return &blockchain
 }
 
@@ -38,8 +40,7 @@ func (b *Blockchain) LastBlock() *Block {
 	return nil
 }
 
-// AddBlock adds block to blockchain or returns an error if the block is not valid
-func (b *Blockchain) AddBlock(block *Block) error {
+func (b *Blockchain) addBlock(block *Block) error {
 	previous := b.LastBlock()
 	if previous == nil {
 		log.Printf("Adding genesis block: %+v\n", block)
@@ -47,7 +48,7 @@ func (b *Blockchain) AddBlock(block *Block) error {
 		return nil
 	}
 	if !block.IsValid() {
-		return errors.New("New block not valid according to proof-of-work")
+		return errors.New("New block is not valid")
 	}
 	if block.Number != previous.Number+1 || !bytes.Equal(block.PreviousHash, previous.Hash) {
 		return errors.New("New block does not follow the last block in blockchain")
@@ -61,7 +62,7 @@ func (b *Blockchain) AddTransaction(transaction Transaction) error {
 	if !transaction.ValidSignature() {
 		return errors.New("Transaction has invalid signature")
 	}
-	b.pool = append(b.pool, transaction)
+	b.pool[base64.StdEncoding.EncodeToString(transaction.Signature)] = transaction
 	return nil
 }
 
@@ -77,6 +78,12 @@ func (b *Blockchain) filterValidTransactions() []Transaction {
 		validTransactions = append(validTransactions, transaction)
 	}
 	return validTransactions
+}
+
+func (b *Blockchain) clearSpentTransactions() {
+	for _, transaction := range b.LastBlock().Transactions {
+		delete(b.pool, base64.StdEncoding.EncodeToString(transaction.Signature))
+	}
 }
 
 func (b *Blockchain) transactionsForNextBlock() []Transaction {
@@ -121,12 +128,13 @@ func (b *Blockchain) MineBlock() {
 	for nonce := 0; nonce < math.MaxInt64; nonce++ {
 		select {
 		case block := <-validBlock:
-			b.AddBlock(&block)
+			b.addBlock(&block)
 			log.Printf("🎉 Found valid block: %+v\n", block)
 			for _, transaction := range block.Transactions {
 				log.Printf("💰 %v\n", transaction)
 			}
 			close(nonces)
+			b.clearSpentTransactions()
 			return
 		case nonces <- nonce:
 		}
