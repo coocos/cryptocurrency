@@ -23,7 +23,7 @@ func parseArgs() Options {
 }
 
 func loadMinerKeyPair(options Options) *keys.KeyPair {
-	keyPair, err := keys.LoadKeyPair(options.privateKey, options.publicKey)
+	keyPair, err := keys.LoadKeyPair(options.privateKey)
 	if err != nil {
 		log.Fatalf("Failed to load key pair, unable to sign transactions: %v\n", err)
 

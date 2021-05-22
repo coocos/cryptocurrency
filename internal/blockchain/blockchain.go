@@ -82,7 +82,7 @@ func (b *Blockchain) filterValidTransactions() []Transaction {
 func (b *Blockchain) transactionsForNextBlock() []Transaction {
 	coinbaseTransaction := Transaction{
 		Sender:   nil,
-		Receiver: b.keyPair.EncodedPublicKey,
+		Receiver: b.keyPair.PublicKey,
 		Amount:   10,
 	}
 	return append([]Transaction{coinbaseTransaction}, b.filterValidTransactions()...)

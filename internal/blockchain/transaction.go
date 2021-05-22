@@ -3,7 +3,6 @@ package blockchain
 import (
 	"crypto/ed25519"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -82,17 +81,9 @@ func (t *Transaction) ValidSignature() bool {
 		return t.IsCoinbase()
 	}
 
-	parsedKey, err := x509.ParsePKIXPublicKey(t.Sender)
-	if err != nil {
-		return false
-	}
-	key, ok := parsedKey.(ed25519.PublicKey)
-	if !ok {
-		return false
-	}
 	transactionHash, err := t.ComputeHash()
 	if err != nil {
 		return false
 	}
-	return ed25519.Verify(key, transactionHash, t.Signature)
+	return ed25519.Verify(t.Sender, transactionHash, t.Signature)
 }

@@ -8,7 +8,7 @@ import (
 
 func TestAccount(t *testing.T) {
 	t.Run("Test adding to account", func(t *testing.T) {
-		account := keys.NewKeyPair().EncodedPublicKey
+		account := keys.NewKeyPair().PublicKey
 		accounts := NewAccounts()
 		accounts.Add(account, 10)
 
@@ -21,7 +21,7 @@ func TestAccount(t *testing.T) {
 		}
 	})
 	t.Run("Test subtracting from account", func(t *testing.T) {
-		account := keys.NewKeyPair().EncodedPublicKey
+		account := keys.NewKeyPair().PublicKey
 		accounts := NewAccounts()
 		accounts.Add(account, 10)
 		err := accounts.Subtract(account, 5)
@@ -37,7 +37,7 @@ func TestAccount(t *testing.T) {
 		}
 	})
 	t.Run("Test subtracting more than available", func(t *testing.T) {
-		account := keys.NewKeyPair().EncodedPrivateKey
+		account := keys.NewKeyPair().PublicKey
 		accounts := NewAccounts()
 		accounts.Add(account, 10)
 		err := accounts.Subtract(account, 15)
@@ -47,7 +47,7 @@ func TestAccount(t *testing.T) {
 	})
 	t.Run("Test reading balances from blockchain", func(t *testing.T) {
 		minerAccount := keys.NewKeyPair()
-		coinbaseTransaction := NewTransaction(nil, minerAccount.EncodedPublicKey, 10)
+		coinbaseTransaction := NewTransaction(nil, minerAccount.PublicKey, 10)
 		coinbaseTransaction.Sign(minerAccount.PrivateKey)
 		chain := NewBlockchain(nil)
 		nonce := 0
@@ -63,7 +63,7 @@ func TestAccount(t *testing.T) {
 		}
 
 		accounts := ReadAccounts(chain)
-		balance, err := accounts.BalanceFor(minerAccount.EncodedPublicKey)
+		balance, err := accounts.BalanceFor(minerAccount.PublicKey)
 		if err != nil {
 			t.Errorf("Failed to read accounts from blockchain: %v\n", err)
 		}

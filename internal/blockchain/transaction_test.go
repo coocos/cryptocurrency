@@ -12,8 +12,8 @@ func TestTransaction(t *testing.T) {
 		receiverKeyPair := keys.NewKeyPair()
 
 		transaction := Transaction{
-			Sender:   senderKeyPair.EncodedPublicKey,
-			Receiver: receiverKeyPair.EncodedPublicKey,
+			Sender:   senderKeyPair.PublicKey,
+			Receiver: receiverKeyPair.PublicKey,
 			Amount:   10,
 		}
 		transaction.Sign(senderKeyPair.PrivateKey)
@@ -27,8 +27,8 @@ func TestTransaction(t *testing.T) {
 		receiverKeyPair := keys.NewKeyPair()
 
 		transaction := Transaction{
-			Sender:   senderKeyPair.EncodedPublicKey,
-			Receiver: receiverKeyPair.EncodedPublicKey,
+			Sender:   senderKeyPair.PublicKey,
+			Receiver: receiverKeyPair.PublicKey,
 			Amount:   10,
 		}
 		transaction.Sign(receiverKeyPair.PrivateKey)
@@ -42,7 +42,7 @@ func TestTransaction(t *testing.T) {
 
 		transaction := Transaction{
 			Sender:   nil,
-			Receiver: minerKeyPair.EncodedPublicKey,
+			Receiver: minerKeyPair.PublicKey,
 			Amount:   10,
 		}
 		if !transaction.IsCoinbase() {

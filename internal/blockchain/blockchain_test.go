@@ -30,7 +30,7 @@ func TestBlockChain(t *testing.T) {
 		if coinbaseTransaction.Sender != nil {
 			t.Error("Coinbase transaction should have no sender")
 		}
-		if !bytes.Equal(coinbaseTransaction.Receiver, miner.EncodedPublicKey) {
+		if !bytes.Equal(coinbaseTransaction.Receiver, miner.PublicKey) {
 			t.Error("Coinbase transaction not sent to miner")
 		}
 		if !coinbaseTransaction.ValidSignature() {
@@ -49,7 +49,7 @@ func TestBlockChain(t *testing.T) {
 		chain.MineBlock()
 
 		// Mine next block and send coins from miner to receiver
-		transaction := NewTransaction(miner.EncodedPublicKey, receiver.EncodedPublicKey, 5)
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5)
 		transaction.Sign(miner.PrivateKey)
 		if err := chain.AddTransaction(*transaction); err != nil {
 			t.Errorf("Failed to add transaction to blockchain: %v", err)
