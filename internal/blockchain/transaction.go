@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"crypto/ed25519"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -28,7 +27,6 @@ func (t Transaction) String() string {
 
 // NewTransaction returns a new unsigned transaction
 func NewTransaction(sender []byte, receiver []byte, amount uint) *Transaction {
-	// FIXME: Validate that both sender and receiver are proper public keys
 	return &Transaction{
 		sender,
 		receiver,
@@ -37,9 +35,9 @@ func NewTransaction(sender []byte, receiver []byte, amount uint) *Transaction {
 	}
 }
 
-// ComputeHash sets the hash for transaction and returns it
-func (t *Transaction) ComputeHash() ([]byte, error) {
-	// Hash should not include the signature
+// Bytes returns the transaction as bytes
+func (t *Transaction) Bytes() ([]byte, error) {
+	// Omit the signature since the signature is used to sign this
 	copy := Transaction{
 		Sender:   t.Sender,
 		Receiver: t.Receiver,
@@ -50,21 +48,16 @@ func (t *Transaction) ComputeHash() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	h := sha256.New()
-	h.Write(bytes)
-	hash := h.Sum(nil)
-
-	return hash, nil
+	return bytes, nil
 }
 
 // Sign signs the transaction using the given key and returns the signature
 func (t *Transaction) Sign(privateKey ed25519.PrivateKey) ([]byte, error) {
-	hash, err := t.ComputeHash()
+	bytes, err := t.Bytes()
 	if err != nil {
 		return nil, err
 	}
-	signature := ed25519.Sign(privateKey, hash)
+	signature := ed25519.Sign(privateKey, bytes)
 	t.Signature = signature
 	return signature, nil
 }
@@ -81,9 +74,9 @@ func (t *Transaction) ValidSignature() bool {
 		return t.IsCoinbase()
 	}
 
-	transactionHash, err := t.ComputeHash()
+	bytes, err := t.Bytes()
 	if err != nil {
 		return false
 	}
-	return ed25519.Verify(t.Sender, transactionHash, t.Signature)
+	return ed25519.Verify(t.Sender, bytes, t.Signature)
 }
