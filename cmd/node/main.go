@@ -34,7 +34,7 @@ func loadMinerKeyPair(options Options) *keys.KeyPair {
 func main() {
 	options := parseArgs()
 
-	chain := blockchain.NewBlockchain(loadMinerKeyPair(options))
+	chain := blockchain.NewBlockchain(loadMinerKeyPair(options), nil)
 	for {
 		chain.MineBlock()
 	}

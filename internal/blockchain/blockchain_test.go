@@ -8,20 +8,34 @@ import (
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
 
+// TestEventEmitter captures blockchain events for tests
+type TestEventEmitter struct {
+	blocks       []Block
+	transactions []Transaction
+}
+
+func (b *TestEventEmitter) EmitBlock(block Block) {
+	b.blocks = append(b.blocks, block)
+}
+
+func (b *TestEventEmitter) EmitTransaction(transaction Transaction) {
+	b.transactions = append(b.transactions, transaction)
+}
+
 func TestBlockChain(t *testing.T) {
 
 	miner := keys.NewKeyPair()
 	receiver := keys.NewKeyPair()
 
 	t.Run("Test that blockchain always includes genesis block", func(t *testing.T) {
-		chain := NewBlockchain(nil)
+		chain := NewBlockchain(nil, nil)
 
 		if chain.LastBlock() == nil {
 			t.Error("Blockchain has no genesis block")
 		}
 	})
 	t.Run("Test that mined block includes coinbase transaction to miner", func(t *testing.T) {
-		chain := NewBlockchain(miner)
+		chain := NewBlockchain(miner, nil)
 		chain.MineBlock()
 
 		expectedTransactions := 1
@@ -44,7 +58,7 @@ func TestBlockChain(t *testing.T) {
 	})
 	t.Run("Test that mined block includes transaction", func(t *testing.T) {
 		// Mine one block so that miner has some coins
-		chain := NewBlockchain(miner)
+		chain := NewBlockchain(miner, nil)
 		chain.MineBlock()
 
 		// Mine next block to send coins from miner to receiver
@@ -64,7 +78,7 @@ func TestBlockChain(t *testing.T) {
 	})
 	t.Run("Test that mined block does not include overspent transaction", func(t *testing.T) {
 		// Mine one block so that miner has some coins
-		chain := NewBlockchain(miner)
+		chain := NewBlockchain(miner, nil)
 		chain.MineBlock()
 
 		// Mine next block to send coins from miner to receiver
@@ -81,7 +95,7 @@ func TestBlockChain(t *testing.T) {
 	})
 	t.Run("Test that spent transaction is not included in the next block", func(t *testing.T) {
 		// Mine one block so that miner has some coins
-		chain := NewBlockchain(miner)
+		chain := NewBlockchain(miner, nil)
 		chain.MineBlock()
 
 		// Mine next block to send coins from miner to receiver
@@ -96,6 +110,26 @@ func TestBlockChain(t *testing.T) {
 		chain.MineBlock()
 		if len(chain.LastBlock().Transactions) > 1 {
 			t.Error("Block included an already spent transaction")
+		}
+	})
+	t.Run("Test that blockchain broadcasts block and transaction events", func(t *testing.T) {
+		eventEmitter := &TestEventEmitter{}
+
+		// Mine one block so that miner has some coins
+		chain := NewBlockchain(miner, eventEmitter)
+		chain.MineBlock()
+		if !reflect.DeepEqual(eventEmitter.blocks[0], *chain.LastBlock()) {
+			t.Error("New block was not emitted")
+		}
+
+		// Mine next block to send coins from miner to receiver
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5)
+		transaction.Sign(miner.PrivateKey)
+		if err := chain.AddTransaction(*transaction); err != nil {
+			t.Errorf("Failed to add transaction to blockchain: %v", err)
+		}
+		if !reflect.DeepEqual(eventEmitter.transactions[0], *transaction) {
+			t.Error("New transaction was not emitted")
 		}
 	})
 }

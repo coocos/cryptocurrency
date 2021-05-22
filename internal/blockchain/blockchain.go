@@ -13,20 +13,25 @@ import (
 
 // Blockchain represents a full blockchain
 type Blockchain struct {
-	chain   []*Block
-	pool    map[string]Transaction
-	keyPair *keys.KeyPair
+	chain        []*Block
+	pool         map[string]Transaction
+	keyPair      *keys.KeyPair
+	eventEmitter EventEmitter
 }
 
 // NewBlockchain returns a new blockchain with a genesis block
-func NewBlockchain(keyPair *keys.KeyPair) *Blockchain {
+func NewBlockchain(keyPair *keys.KeyPair, eventEmitter EventEmitter) *Blockchain {
 	if keyPair == nil {
 		log.Println("No key pair given - generating a new one")
 		keyPair = keys.NewKeyPair()
 	}
+	if eventEmitter == nil {
+		eventEmitter = &DummyEventEmitter{}
+	}
 	blockchain := Blockchain{
-		keyPair: keyPair,
-		pool:    make(map[string]Transaction),
+		keyPair:      keyPair,
+		pool:         make(map[string]Transaction),
+		eventEmitter: eventEmitter,
 	}
 	blockchain.addBlock(GenesisBlock())
 	return &blockchain
@@ -54,6 +59,7 @@ func (b *Blockchain) addBlock(block *Block) error {
 		return errors.New("New block does not follow the last block in blockchain")
 	}
 	b.chain = append(b.chain, block)
+	b.eventEmitter.EmitBlock(*block)
 	return nil
 }
 
@@ -63,6 +69,7 @@ func (b *Blockchain) AddTransaction(transaction Transaction) error {
 		return errors.New("Transaction has invalid signature")
 	}
 	b.pool[base64.StdEncoding.EncodeToString(transaction.Signature)] = transaction
+	b.eventEmitter.EmitTransaction(transaction)
 	return nil
 }
 
