@@ -6,7 +6,7 @@ A simple cryptocurrency built out of curiosity.
 
 - classic blockchain structure
 - parallel SHA256-based proof-of-work computation
-- signed transactions using [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519)
+- signed transactions using Ed25519
 - miners are rewarded with a coinbase transaction per block
 - balance based account model
 
@@ -18,7 +18,7 @@ A simple cryptocurrency built out of curiosity.
 
 ## Running
 
-Miners need to have an [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519) public key in order to receive coinbase transactions, i.e. the reward transaction for mining a block. To do that, you can generate a new random key pair first:
+Miners need to have an Ed25519 public key in order to receive coinbase transactions, i.e. the reward transaction for mining a block. To do that, you can generate a new random key pair first:
 
 ```shell
 go run cmd/keygen.go
