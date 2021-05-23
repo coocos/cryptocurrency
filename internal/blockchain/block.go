@@ -40,14 +40,14 @@ func NewBlock(number int, previousHash []byte, transactions []Transaction, nonce
 
 // GenesisBlock returns the fixed first block in the blockchain
 func GenesisBlock() *Block {
+	genesisHash, _ := hex.DecodeString("000002be9afbfdaa977028a51d10bd590f9b56b03c3f570b8723e3809dc439ba")
 	block := Block{
 		Number:       0,
 		Time:         time.Date(2021, time.May, 1, 6, 0, 0, 0, time.UTC),
 		PreviousHash: nil,
 		Nonce:        3999606801082803789,
+		Hash:         genesisHash,
 	}
-	hash, _ := hex.DecodeString("000002be9afbfdaa977028a51d10bd590f9b56b03c3f570b8723e3809dc439ba")
-	block.Hash = hash
 	if !block.IsValid() {
 		log.Fatalln("Genesis block is not valid")
 	}
@@ -80,6 +80,7 @@ func (b *Block) IsValid() bool {
 	if b.Number == 0 {
 		return true
 	}
+	targetHash := make([]byte, 2)
 	return len(b.Transactions) >= 1 && b.Transactions[0].IsCoinbase() && bytes.Equal(b.ComputeHash(), b.Hash) &&
-		hex.EncodeToString(b.Hash)[:4] == "0000"
+		bytes.Equal(b.Hash[:2], targetHash)
 }
