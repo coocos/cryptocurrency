@@ -109,6 +109,21 @@ type ProofOfWorkRequest struct {
 	blockTransactions []Transaction
 }
 
+// blockWorker attempts to find a valid block using the nonces received from the input channel
+func blockWorker(nonces <-chan int, validBlock chan<- Block, request ProofOfWorkRequest) {
+	for {
+		nonce, more := <-nonces
+		if !more {
+			return
+		}
+		block := NewBlock(request.blockNumber, request.previousBlockHash, request.blockTransactions, nonce)
+		if block.IsValid() {
+			validBlock <- *block
+			return
+		}
+	}
+}
+
 // MineBlock mines a new valid block with transactions from the mempool
 func (b *Blockchain) MineBlock() {
 	nonces := make(chan int)
@@ -116,26 +131,16 @@ func (b *Blockchain) MineBlock() {
 
 	// Create a worker per core to mine for a valid block
 	for worker := 0; worker < runtime.NumCPU(); worker++ {
-		go func(nonces <-chan int, validBlock chan<- Block, request ProofOfWorkRequest) {
-			for {
-				nonce, more := <-nonces
-				if !more {
-					return
-				}
-				block := NewBlock(request.blockNumber, request.previousBlockHash, request.blockTransactions, nonce)
-				if block.IsValid() {
-					validBlock <- *block
-					return
-				}
-			}
-		}(nonces, validBlock, ProofOfWorkRequest{b.LastBlock().Number + 1, b.LastBlock().Hash, b.transactionsForNextBlock()})
+		go blockWorker(nonces, validBlock, ProofOfWorkRequest{b.LastBlock().Number + 1, b.LastBlock().Hash, b.transactionsForNextBlock()})
 	}
 
 	// Send incremental nonces to workers until a valid block is found
 	for nonce := 0; nonce < math.MaxInt64; nonce++ {
 		select {
 		case block := <-validBlock:
-			b.addBlock(&block)
+			if err := b.addBlock(&block); err != nil {
+				log.Fatalf("Failed to add internally generated block to blockchain: %v\n", err)
+			}
 			log.Printf("🎉 Found valid block: %+v\n", block)
 			for _, transaction := range block.Transactions {
 				log.Printf("💰 %v\n", transaction)
@@ -146,4 +151,6 @@ func (b *Blockchain) MineBlock() {
 		case nonces <- nonce:
 		}
 	}
+
+	log.Fatalln("Exhausted possible nonce values")
 }
