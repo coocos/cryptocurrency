@@ -13,10 +13,11 @@ import (
 
 // Blockchain represents a full blockchain
 type Blockchain struct {
-	chain        []*Block
-	pool         map[string]Transaction
-	keyPair      *keys.KeyPair
-	eventEmitter EventEmitter
+	chain          []*Block
+	pool           map[string]Transaction
+	keyPair        *keys.KeyPair
+	eventEmitter   EventEmitter
+	externalBlocks chan Block
 }
 
 // NewBlockchain returns a new blockchain with a genesis block
@@ -29,9 +30,10 @@ func NewBlockchain(keyPair *keys.KeyPair, eventEmitter EventEmitter) *Blockchain
 		eventEmitter = &DummyEventEmitter{}
 	}
 	blockchain := Blockchain{
-		keyPair:      keyPair,
-		pool:         make(map[string]Transaction),
-		eventEmitter: eventEmitter,
+		keyPair:        keyPair,
+		pool:           make(map[string]Transaction),
+		eventEmitter:   eventEmitter,
+		externalBlocks: make(chan Block, 128),
 	}
 	blockchain.addBlock(GenesisBlock())
 	return &blockchain
@@ -45,6 +47,22 @@ func (b *Blockchain) LastBlock() *Block {
 	return nil
 }
 
+// SubmitExternalBlock sends an externally received block to the blockchain
+func (b *Blockchain) SubmitExternalBlock(block *Block) {
+	b.externalBlocks <- *block
+}
+
+func (b *Blockchain) isNextValidBlock(block *Block) bool {
+	if !block.IsValid() {
+		return false
+	}
+	previous := b.LastBlock()
+	if block.Number != previous.Number+1 || !bytes.Equal(block.PreviousHash, previous.Hash) {
+		return false
+	}
+	return true
+}
+
 func (b *Blockchain) addBlock(block *Block) error {
 	previous := b.LastBlock()
 	if previous == nil {
@@ -52,11 +70,8 @@ func (b *Blockchain) addBlock(block *Block) error {
 		b.chain = append(b.chain, block)
 		return nil
 	}
-	if !block.IsValid() {
+	if !b.isNextValidBlock(block) {
 		return errors.New("New block is not valid")
-	}
-	if block.Number != previous.Number+1 || !bytes.Equal(block.PreviousHash, previous.Hash) {
-		return errors.New("New block does not follow the last block in blockchain")
 	}
 	b.chain = append(b.chain, block)
 	b.eventEmitter.EmitBlock(*block)
@@ -109,7 +124,6 @@ type ProofOfWorkRequest struct {
 	blockTransactions []Transaction
 }
 
-// blockWorker attempts to find a valid block using the nonces received from the input channel
 func blockWorker(nonces <-chan int, validBlock chan<- Block, request ProofOfWorkRequest) {
 	for {
 		nonce, more := <-nonces
@@ -129,6 +143,11 @@ func (b *Blockchain) MineBlock() {
 	nonces := make(chan int)
 	validBlock := make(chan Block, runtime.NumCPU())
 
+	defer func() {
+		close(nonces)
+		b.clearSpentTransactions()
+	}()
+
 	// Create a worker per core to mine for a valid block
 	for worker := 0; worker < runtime.NumCPU(); worker++ {
 		go blockWorker(nonces, validBlock, ProofOfWorkRequest{b.LastBlock().Number + 1, b.LastBlock().Hash, b.transactionsForNextBlock()})
@@ -137,6 +156,16 @@ func (b *Blockchain) MineBlock() {
 	// Send incremental nonces to workers until a valid block is found
 	for nonce := 0; nonce < math.MaxInt64; nonce++ {
 		select {
+		// Another node found a valid block
+		case block := <-b.externalBlocks:
+			if b.isNextValidBlock(&block) {
+				if err := b.addBlock(&block); err != nil {
+					log.Fatalf("Failed to add external block to blockchain: %v\n", err)
+				}
+				log.Printf("😢 Lost the race for the current block: %+v\n", block)
+				return
+			}
+		// Found a valid block
 		case block := <-validBlock:
 			if err := b.addBlock(&block); err != nil {
 				log.Fatalf("Failed to add internally generated block to blockchain: %v\n", err)
@@ -145,10 +174,10 @@ func (b *Blockchain) MineBlock() {
 			for _, transaction := range block.Transactions {
 				log.Printf("💰 %v\n", transaction)
 			}
-			close(nonces)
-			b.clearSpentTransactions()
 			return
-		case nonces <- nonce:
+		// No valid block found yet so keep sending nonces to workers
+		default:
+			nonces <- nonce
 		}
 	}
 

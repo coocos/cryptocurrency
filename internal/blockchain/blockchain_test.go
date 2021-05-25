@@ -112,6 +112,18 @@ func TestBlockChain(t *testing.T) {
 			t.Error("Block included an already spent transaction")
 		}
 	})
+	t.Run("Test that blockchain accepts valid blocks from other chains", func(t *testing.T) {
+		firstChain := NewBlockchain(miner, nil)
+		secondChain := NewBlockchain(miner, nil)
+
+		firstChain.MineBlock()
+		secondChain.SubmitExternalBlock(firstChain.LastBlock())
+		secondChain.MineBlock()
+
+		if !reflect.DeepEqual(firstChain.LastBlock(), secondChain.LastBlock()) {
+			t.Error("Blockchain did not accept block from other chain")
+		}
+	})
 	t.Run("Test that blockchain broadcasts block and transaction events", func(t *testing.T) {
 		eventEmitter := &TestEventEmitter{}
 

@@ -10,5 +10,8 @@ type EventEmitter interface {
 type DummyEventEmitter struct {
 }
 
-func (b *DummyEventEmitter) EmitBlock(block Block)                   {}
+// EmitBlock simply swallows the block and does nothing
+func (b *DummyEventEmitter) EmitBlock(block Block) {}
+
+// EmitBlock simply swallows the block and does nothing
 func (b *DummyEventEmitter) EmitTransaction(transaction Transaction) {}
