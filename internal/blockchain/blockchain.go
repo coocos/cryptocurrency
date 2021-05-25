@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"bytes"
 	"encoding/base64"
 	"errors"
 	"log"
@@ -52,17 +51,6 @@ func (b *Blockchain) SubmitExternalBlock(block *Block) {
 	b.externalBlocks <- *block
 }
 
-func (b *Blockchain) isNextValidBlock(block *Block) bool {
-	if !block.IsValid() {
-		return false
-	}
-	previous := b.LastBlock()
-	if block.Number != previous.Number+1 || !bytes.Equal(block.PreviousHash, previous.Hash) {
-		return false
-	}
-	return true
-}
-
 func (b *Blockchain) addBlock(block *Block) error {
 	previous := b.LastBlock()
 	if previous == nil {
@@ -70,7 +58,7 @@ func (b *Blockchain) addBlock(block *Block) error {
 		b.chain = append(b.chain, block)
 		return nil
 	}
-	if !b.isNextValidBlock(block) {
+	if !block.IsValid(previous) {
 		return errors.New("New block is not valid")
 	}
 	b.chain = append(b.chain, block)
@@ -120,7 +108,7 @@ func (b *Blockchain) transactionsForNextBlock() []Transaction {
 // ProofOfWorkRequest is a request to mine a new block
 type ProofOfWorkRequest struct {
 	blockNumber       int
-	previousBlockHash []byte
+	previousBlock     Block
 	blockTransactions []Transaction
 }
 
@@ -130,8 +118,8 @@ func blockWorker(nonces <-chan int, validBlock chan<- Block, request ProofOfWork
 		if !more {
 			return
 		}
-		block := NewBlock(request.blockNumber, request.previousBlockHash, request.blockTransactions, nonce)
-		if block.IsValid() {
+		block := NewBlock(request.blockNumber, request.previousBlock.Hash, request.blockTransactions, nonce)
+		if block.IsValid(&request.previousBlock) {
 			validBlock <- *block
 			return
 		}
@@ -150,7 +138,7 @@ func (b *Blockchain) MineBlock() {
 
 	// Create a worker per core to mine for a valid block
 	for worker := 0; worker < runtime.NumCPU(); worker++ {
-		go blockWorker(nonces, validBlock, ProofOfWorkRequest{b.LastBlock().Number + 1, b.LastBlock().Hash, b.transactionsForNextBlock()})
+		go blockWorker(nonces, validBlock, ProofOfWorkRequest{b.LastBlock().Number + 1, *b.LastBlock(), b.transactionsForNextBlock()})
 	}
 
 	// Send incremental nonces to workers until a valid block is found
@@ -158,7 +146,7 @@ func (b *Blockchain) MineBlock() {
 		select {
 		// Another node found a valid block
 		case block := <-b.externalBlocks:
-			if b.isNextValidBlock(&block) {
+			if block.IsValid(b.LastBlock()) {
 				if err := b.addBlock(&block); err != nil {
 					log.Fatalf("Failed to add external block to blockchain: %v\n", err)
 				}

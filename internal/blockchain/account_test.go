@@ -53,7 +53,7 @@ func TestAccount(t *testing.T) {
 		nonce := 0
 		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []Transaction{*coinbaseTransaction}, nonce)
 		// FIXME: Instead of mining a valid block, use deterministic key generation and hardcode the block hash
-		for !block.IsValid() {
+		for !block.IsValid(chain.LastBlock()) {
 			nonce += 1
 			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []Transaction{*coinbaseTransaction}, nonce)
 		}
