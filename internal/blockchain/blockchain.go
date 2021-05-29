@@ -6,32 +6,29 @@ import (
 	"log"
 	"math"
 	"runtime"
+	"sync"
 
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
 
 // Blockchain represents a full blockchain
 type Blockchain struct {
+	lock           sync.RWMutex
 	chain          []*Block
 	pool           map[string]Transaction
 	keyPair        *keys.KeyPair
-	eventEmitter   EventEmitter
 	externalBlocks chan Block
 }
 
 // NewBlockchain returns a new blockchain with a genesis block
-func NewBlockchain(keyPair *keys.KeyPair, eventEmitter EventEmitter) *Blockchain {
+func NewBlockchain(keyPair *keys.KeyPair) *Blockchain {
 	if keyPair == nil {
 		log.Println("No key pair given - generating a new one")
 		keyPair = keys.NewKeyPair()
 	}
-	if eventEmitter == nil {
-		eventEmitter = &DummyEventEmitter{}
-	}
 	blockchain := Blockchain{
 		keyPair:        keyPair,
 		pool:           make(map[string]Transaction),
-		eventEmitter:   eventEmitter,
 		externalBlocks: make(chan Block, 128),
 	}
 	blockchain.addBlock(GenesisBlock())
@@ -40,6 +37,8 @@ func NewBlockchain(keyPair *keys.KeyPair, eventEmitter EventEmitter) *Blockchain
 
 // LastBlock returns the last block in the blockchain
 func (b *Blockchain) LastBlock() *Block {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
 	if len(b.chain) > 0 {
 		return b.chain[len(b.chain)-1]
 	}
@@ -55,14 +54,17 @@ func (b *Blockchain) addBlock(block *Block) error {
 	previous := b.LastBlock()
 	if previous == nil {
 		log.Printf("Adding genesis block: %+v\n", block)
+		b.lock.Lock()
 		b.chain = append(b.chain, block)
+		b.lock.Unlock()
 		return nil
 	}
 	if !block.IsValid(previous) {
 		return errors.New("New block is not valid")
 	}
+	b.lock.Lock()
 	b.chain = append(b.chain, block)
-	b.eventEmitter.EmitBlock(*block)
+	b.lock.Unlock()
 	return nil
 }
 
@@ -72,7 +74,6 @@ func (b *Blockchain) AddTransaction(transaction Transaction) error {
 		return errors.New("Transaction has invalid signature")
 	}
 	b.pool[base64.StdEncoding.EncodeToString(transaction.Signature)] = transaction
-	b.eventEmitter.EmitTransaction(transaction)
 	return nil
 }
 

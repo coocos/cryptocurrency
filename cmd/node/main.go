@@ -4,8 +4,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/coocos/cryptocurrency/internal/blockchain"
 	"github.com/coocos/cryptocurrency/internal/keys"
+	"github.com/coocos/cryptocurrency/internal/network"
 )
 
 // Options passed as CLI flags
@@ -32,10 +32,7 @@ func loadMinerKeyPair(options Options) *keys.KeyPair {
 }
 
 func main() {
-	options := parseArgs()
-
-	chain := blockchain.NewBlockchain(loadMinerKeyPair(options), nil)
-	for {
-		chain.MineBlock()
-	}
+	keyOptions := parseArgs()
+	node := network.NewNode(loadMinerKeyPair(keyOptions))
+	node.Start()
 }
