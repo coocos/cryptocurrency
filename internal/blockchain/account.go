@@ -53,7 +53,7 @@ func (a *Accounts) Subtract(account []byte, amount uint) error {
 // ReadAccounts goes through the blockchain and returns all the accounts
 func ReadAccounts(blockchain *Blockchain) *Accounts {
 	accounts := NewAccounts()
-	for _, block := range blockchain.chain {
+	for _, block := range blockchain.blocks {
 		for _, transaction := range block.Transactions {
 			accounts.Add(transaction.Receiver, transaction.Amount)
 			// Coinbase transactions do not have a sender

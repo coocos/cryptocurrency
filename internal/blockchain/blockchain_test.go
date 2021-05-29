@@ -22,13 +22,13 @@ func TestBlockChain(t *testing.T) {
 	})
 	t.Run("Test that mined block includes coinbase transaction to miner", func(t *testing.T) {
 		chain := NewBlockchain(miner)
-		chain.MineBlock()
+		block := chain.MineBlock()
 
 		expectedTransactions := 1
-		if len(chain.LastBlock().Transactions) != expectedTransactions {
+		if len(block.Transactions) != expectedTransactions {
 			t.Errorf("Expected %d transactions but there are %d\n", expectedTransactions, len(chain.LastBlock().Transactions))
 		}
-		coinbaseTransaction := chain.LastBlock().Transactions[0]
+		coinbaseTransaction := block.Transactions[0]
 		if coinbaseTransaction.Sender != nil {
 			t.Error("Coinbase transaction should have no sender")
 		}
@@ -53,12 +53,11 @@ func TestBlockChain(t *testing.T) {
 		if err := chain.AddTransaction(*transaction); err != nil {
 			t.Errorf("Failed to add transaction to blockchain: %v", err)
 		}
-		chain.MineBlock()
-
-		if len(chain.LastBlock().Transactions) != 2 {
+		block := chain.MineBlock()
+		if len(block.Transactions) != 2 {
 			t.Error("Transaction was not included in block")
 		}
-		if !reflect.DeepEqual(chain.LastBlock().Transactions[1], *transaction) {
+		if !reflect.DeepEqual(block.Transactions[1], *transaction) {
 			t.Error("Included transaction does not match submitted transaction")
 		}
 	})
@@ -73,9 +72,8 @@ func TestBlockChain(t *testing.T) {
 		if err := chain.AddTransaction(*transaction); err != nil {
 			t.Errorf("Failed to add transaction to blockchain: %v", err)
 		}
-		chain.MineBlock()
-
-		if len(chain.LastBlock().Transactions) > 1 {
+		block := chain.MineBlock()
+		if len(block.Transactions) > 1 {
 			t.Fatal("Invalid transaction was included in block")
 		}
 	})
@@ -93,8 +91,8 @@ func TestBlockChain(t *testing.T) {
 		chain.MineBlock()
 
 		// Mine another block to see that it does include the spent transaction
-		chain.MineBlock()
-		if len(chain.LastBlock().Transactions) > 1 {
+		block := chain.MineBlock()
+		if len(block.Transactions) > 1 {
 			t.Error("Block included an already spent transaction")
 		}
 	})
@@ -102,11 +100,11 @@ func TestBlockChain(t *testing.T) {
 		firstChain := NewBlockchain(miner)
 		secondChain := NewBlockchain(miner)
 
-		firstChain.MineBlock()
+		firstBlock := firstChain.MineBlock()
 		secondChain.SubmitExternalBlock(firstChain.LastBlock())
-		secondChain.MineBlock()
+		secondBlock := secondChain.MineBlock()
 
-		if !reflect.DeepEqual(firstChain.LastBlock(), secondChain.LastBlock()) {
+		if !reflect.DeepEqual(firstBlock, secondBlock) {
 			t.Error("Blockchain did not accept block from other chain")
 		}
 	})

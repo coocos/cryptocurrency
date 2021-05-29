@@ -14,7 +14,7 @@ import (
 // Blockchain represents a full blockchain
 type Blockchain struct {
 	lock           sync.RWMutex
-	chain          []*Block
+	blocks         []*Block
 	pool           map[string]Transaction
 	keyPair        *keys.KeyPair
 	externalBlocks chan Block
@@ -39,8 +39,8 @@ func NewBlockchain(keyPair *keys.KeyPair) *Blockchain {
 func (b *Blockchain) LastBlock() *Block {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
-	if len(b.chain) > 0 {
-		return b.chain[len(b.chain)-1]
+	if len(b.blocks) > 0 {
+		return b.blocks[len(b.blocks)-1]
 	}
 	return nil
 }
@@ -55,7 +55,7 @@ func (b *Blockchain) addBlock(block *Block) error {
 	if previous == nil {
 		log.Printf("Adding genesis block: %+v\n", block)
 		b.lock.Lock()
-		b.chain = append(b.chain, block)
+		b.blocks = append(b.blocks, block)
 		b.lock.Unlock()
 		return nil
 	}
@@ -63,7 +63,7 @@ func (b *Blockchain) addBlock(block *Block) error {
 		return errors.New("New block is not valid")
 	}
 	b.lock.Lock()
-	b.chain = append(b.chain, block)
+	b.blocks = append(b.blocks, block)
 	b.lock.Unlock()
 	return nil
 }
@@ -128,7 +128,7 @@ func blockWorker(nonces <-chan int, validBlock chan<- Block, request ProofOfWork
 }
 
 // MineBlock mines a new valid block with transactions from the mempool
-func (b *Blockchain) MineBlock() {
+func (b *Blockchain) MineBlock() Block {
 	nonces := make(chan int)
 	validBlock := make(chan Block, runtime.NumCPU())
 
@@ -151,8 +151,8 @@ func (b *Blockchain) MineBlock() {
 				if err := b.addBlock(&block); err != nil {
 					log.Fatalf("Failed to add external block to blockchain: %v\n", err)
 				}
-				log.Printf("😢 Lost the race for the current block: %+v\n", block)
-				return
+				log.Printf("Lost the race for the current block: %+v\n", block)
+				return *b.LastBlock()
 			}
 		// Found a valid block
 		case block := <-validBlock:
@@ -163,12 +163,12 @@ func (b *Blockchain) MineBlock() {
 			for _, transaction := range block.Transactions {
 				log.Printf("💰 %v\n", transaction)
 			}
-			return
+			return *b.LastBlock()
 		// No valid block found yet so keep sending nonces to workers
 		default:
 			nonces <- nonce
 		}
 	}
 
-	log.Fatalln("Exhausted possible nonce values")
+	panic("Exhausted possible nonce values")
 }

@@ -47,21 +47,8 @@ func TestAccount(t *testing.T) {
 	})
 	t.Run("Test reading balances from blockchain", func(t *testing.T) {
 		minerAccount := keys.NewKeyPair()
-		coinbaseTransaction := NewTransaction(nil, minerAccount.PublicKey, 10)
-		coinbaseTransaction.Sign(minerAccount.PrivateKey)
-		chain := NewBlockchain(nil)
-		nonce := 0
-		block := NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []Transaction{*coinbaseTransaction}, nonce)
-		// FIXME: Instead of mining a valid block, use deterministic key generation and hardcode the block hash
-		for !block.IsValid(chain.LastBlock()) {
-			nonce += 1
-			block = NewBlock(chain.LastBlock().Number+1, chain.LastBlock().Hash, []Transaction{*coinbaseTransaction}, nonce)
-		}
-		err := chain.addBlock(block)
-		if err != nil {
-			t.Errorf("Failed to add block to blockchain: %v\n", err)
-		}
-
+		chain := NewBlockchain(minerAccount)
+		chain.MineBlock()
 		accounts := ReadAccounts(chain)
 		balance, err := accounts.BalanceFor(minerAccount.PublicKey)
 		if err != nil {
