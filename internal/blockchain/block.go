@@ -3,10 +3,12 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/bits"
 	"time"
 )
 
@@ -75,7 +77,14 @@ func (b *Block) IsValid(previous *Block) bool {
 	if b.Number != previous.Number+1 || !bytes.Equal(b.PreviousHash, previous.Hash) {
 		return false
 	}
-	targetHash := make([]byte, 2)
-	return len(b.Transactions) >= 1 && b.Transactions[0].IsCoinbase() && bytes.Equal(b.ComputeHash(), b.Hash) &&
-		bytes.Equal(b.Hash[:2], targetHash)
+	if len(b.Transactions) < 1 {
+		return false
+	}
+	if !b.Transactions[0].IsCoinbase() {
+		return false
+	}
+	if !bytes.Equal(b.Hash, b.ComputeHash()) {
+		return false
+	}
+	return bits.LeadingZeros64(binary.BigEndian.Uint64(b.Hash)) > 16
 }
