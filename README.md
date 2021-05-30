@@ -28,5 +28,5 @@ go run cmd/keygen.go
 This will generate a key pair in your current directory, which will be used by default. After that, you can start mining:
 
 ```shell
-go run cmd/node/main.go
+go run cmd/node/node.go
 ```
