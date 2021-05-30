@@ -10,11 +10,12 @@ A simple cryptocurrency built out of curiosity.
 - miners are rewarded with a coinbase transaction per block
 - balance based account model
 
-## Not implemented (yet)
+## Limitations
 
-- peer-to-peer networking & consensus (i.e. the blockchain is currenly mined by a single node)
-- transaction rewards
-- difficulty scaling
+- no peer-to-peer networking (the blockchain is currenly mined by a single node)
+- no transaction rewards (miners have no incentive to include transactions in blocks)
+- no difficulty scaling (increasing amount of mining nodes will lead to rapid inflation)
+- transactions vulnerable to replay attacks
 
 ## Running
 
