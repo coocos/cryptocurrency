@@ -79,6 +79,9 @@ func (b *Blockchain) filterValidTransactions() []Transaction {
 		}
 		accounts.Add(transaction.Receiver, transaction.Amount)
 		validTransactions = append(validTransactions, transaction)
+		if len(validTransactions) == maxTransactionsPerBlock-1 {
+			break
+		}
 	}
 	return validTransactions
 }

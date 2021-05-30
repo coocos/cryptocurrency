@@ -22,6 +22,10 @@ type Block struct {
 	Hash         []byte        `json:"hash"`
 }
 
+const (
+	maxTransactionsPerBlock = 64
+)
+
 // String returns the string representation of a block
 func (b Block) String() string {
 	return fmt.Sprintf("Block %d %x transactions: %d", b.Number, b.Hash, len(b.Transactions))
@@ -77,7 +81,7 @@ func (b *Block) IsValid(previous *Block) bool {
 	if b.Number != previous.Number+1 || !bytes.Equal(b.PreviousHash, previous.Hash) {
 		return false
 	}
-	if len(b.Transactions) < 1 {
+	if len(b.Transactions) < 1 || len(b.Transactions) > maxTransactionsPerBlock {
 		return false
 	}
 	if !b.Transactions[0].IsCoinbase() {
