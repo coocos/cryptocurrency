@@ -6,14 +6,12 @@ import (
 	"log"
 	"math"
 	"runtime"
-	"sync"
 
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
 
 // Blockchain represents a full blockchain
 type Blockchain struct {
-	lock           sync.RWMutex
 	blocks         []*Block
 	pool           map[string]Transaction
 	keyPair        *keys.KeyPair
@@ -37,8 +35,6 @@ func NewBlockchain(keyPair *keys.KeyPair) *Blockchain {
 
 // LastBlock returns the last block in the blockchain
 func (b *Blockchain) LastBlock() *Block {
-	b.lock.RLock()
-	defer b.lock.RUnlock()
 	if len(b.blocks) > 0 {
 		return b.blocks[len(b.blocks)-1]
 	}
@@ -54,17 +50,13 @@ func (b *Blockchain) addBlock(block *Block) error {
 	previous := b.LastBlock()
 	if previous == nil {
 		log.Printf("Adding genesis block: %+v\n", block)
-		b.lock.Lock()
 		b.blocks = append(b.blocks, block)
-		b.lock.Unlock()
 		return nil
 	}
 	if !block.IsValid(previous) {
 		return errors.New("New block is not valid")
 	}
-	b.lock.Lock()
 	b.blocks = append(b.blocks, block)
-	b.lock.Unlock()
 	return nil
 }
 

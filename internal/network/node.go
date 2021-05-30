@@ -9,30 +9,18 @@ import (
 type Node struct {
 	chain *blockchain.Blockchain
 	api   *Api
-}
-
-type BlockchainSource struct {
-	chain *blockchain.Blockchain
-}
-
-// ReadBlock returns the last block in the blockchain
-func (b *BlockchainSource) ReadBlock() blockchain.Block {
-	return *b.chain.LastBlock()
-}
-
-// SubmitBlock submits a new block to the blockchain
-func (b *BlockchainSource) SubmitBlock(block blockchain.Block) {
-	b.chain.SubmitExternalBlock(&block)
+	cache *BlockCache
 }
 
 // NewNode returns a new node which mines blocks using the given key pair
 func NewNode(keyPair *keys.KeyPair) *Node {
 	chain := blockchain.NewBlockchain(keyPair)
-	proxy := BlockchainSource{chain}
-	server := NewApi(&proxy)
+	cache := &BlockCache{}
+	server := NewApi(cache, relayReceivedBlocks(chain))
 	return &Node{
 		chain,
 		server,
+		cache,
 	}
 }
 
@@ -42,10 +30,21 @@ func (n *Node) Start() {
 	n.api.Serve()
 }
 
+func relayReceivedBlocks(chain *blockchain.Blockchain) chan<- blockchain.Block {
+	blocks := make(chan blockchain.Block)
+	go func() {
+		for block := range blocks {
+			chain.SubmitExternalBlock(&block)
+		}
+	}()
+	return blocks
+}
+
 func (n *Node) mine() {
 	go func() {
 		for {
-			n.chain.MineBlock()
+			block := n.chain.MineBlock()
+			n.cache.AddBlock(block)
 		}
 	}()
 }
