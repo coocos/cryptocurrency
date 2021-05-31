@@ -1,6 +1,9 @@
 package network
 
 import (
+	"log"
+	"os"
+
 	"github.com/coocos/cryptocurrency/internal/blockchain"
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
@@ -26,8 +29,24 @@ func NewNode(keyPair *keys.KeyPair) *Node {
 
 // Start starts the node
 func (n *Node) Start() {
+	seedHost, defined := os.LookupEnv("CRYPTO_SEED_HOST")
+	if defined {
+		log.Println("Syncing blockchain via", seedHost)
+		n.syncBlockchain(seedHost)
+	}
 	n.mine()
 	n.api.Serve()
+}
+
+func (n *Node) syncBlockchain(seedHost string) {
+	client := NodeClient{seedHost}
+	blocks, err := client.GetBlocks()
+	if err != nil {
+		log.Fatalln("Failed to read blocks from seed host:", err)
+	}
+	for _, block := range blocks {
+		n.chain.SubmitExternalBlock(&block)
+	}
 }
 
 func relayReceivedBlocks(chain *blockchain.Blockchain) chan<- blockchain.Block {

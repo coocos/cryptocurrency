@@ -146,7 +146,7 @@ func (b *Blockchain) MineBlock() Block {
 				if err := b.addBlock(&block); err != nil {
 					log.Fatalf("Failed to add external block to blockchain: %v\n", err)
 				}
-				log.Printf("Lost the race for the current block: %+v\n", block)
+				log.Println("Remote node found valid block:", block)
 				return *b.LastBlock()
 			}
 		// Found a valid block

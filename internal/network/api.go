@@ -23,8 +23,8 @@ func NewApi(cache *BlockCache, unconfirmedBlocks chan<- blockchain.Block) *Api {
 	}
 }
 
-func getNodeHost() string {
-	nodeHost, defined := os.LookupEnv("NODE_HOST")
+func getApiHost() string {
+	nodeHost, defined := os.LookupEnv("CRYPTO_NODE_HOST")
 	if !defined {
 		nodeHost = "localhost:8000"
 	}
@@ -39,9 +39,12 @@ func (a *Api) Serve() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		block := a.cache.ReadLastBlock()
+		blocks := []blockchain.Block{}
+		for block := range a.cache.ReadBlocks() {
+			blocks = append(blocks, block)
+		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(block)
+		json.NewEncoder(w).Encode(blocks)
 	})
 	// Receives new blocks from other nodes
 	http.HandleFunc("/api/v1/block/", func(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +61,7 @@ func (a *Api) Serve() {
 		a.unconfirmedBlocks <- block
 		w.WriteHeader(http.StatusAccepted)
 	})
-	nodeHost := getNodeHost()
+	nodeHost := getApiHost()
 	log.Println("Starting API server at", nodeHost)
 	http.ListenAndServe(nodeHost, nil)
 }
