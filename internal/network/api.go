@@ -2,7 +2,9 @@ package network
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/coocos/cryptocurrency/internal/blockchain"
 )
@@ -19,6 +21,14 @@ func NewApi(cache *BlockCache, unconfirmedBlocks chan<- blockchain.Block) *Api {
 		cache,
 		unconfirmedBlocks,
 	}
+}
+
+func getNodeHost() string {
+	nodeHost, defined := os.LookupEnv("NODE_HOST")
+	if !defined {
+		nodeHost = "localhost:8000"
+	}
+	return nodeHost
 }
 
 // Serve starts the API
@@ -48,5 +58,7 @@ func (a *Api) Serve() {
 		a.unconfirmedBlocks <- block
 		w.WriteHeader(http.StatusAccepted)
 	})
-	http.ListenAndServe("localhost:8080", nil)
+	nodeHost := getNodeHost()
+	log.Println("Starting API server at", nodeHost)
+	http.ListenAndServe(nodeHost, nil)
 }
