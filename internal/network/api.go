@@ -24,11 +24,10 @@ func NewApi(cache *BlockCache, unconfirmedBlocks chan<- blockchain.Block) *Api {
 }
 
 func getApiHost() string {
-	nodeHost, defined := os.LookupEnv("CRYPTO_NODE_HOST")
-	if !defined {
-		nodeHost = "localhost:8000"
+	if nodeHost, ok := os.LookupEnv("CRYPTO_NODE_HOST"); ok {
+		return nodeHost
 	}
-	return nodeHost
+	return "localhost:8000"
 }
 
 // Serve starts the API

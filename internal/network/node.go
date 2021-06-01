@@ -29,8 +29,7 @@ func NewNode(keyPair *keys.KeyPair) *Node {
 
 // Start starts the node
 func (n *Node) Start() {
-	seedHost, defined := os.LookupEnv("CRYPTO_SEED_HOST")
-	if defined {
+	if seedHost, ok := os.LookupEnv("CRYPTO_SEED_HOST"); ok {
 		log.Println("Syncing blockchain via", seedHost)
 		n.syncBlockchain(seedHost)
 	}
