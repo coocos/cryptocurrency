@@ -12,18 +12,17 @@ import (
 type Node struct {
 	chain *blockchain.Blockchain
 	api   *Api
-	cache *BlockCache
+	peers map[string]bool
 }
 
 // NewNode returns a new node which mines blocks using the given key pair
 func NewNode(keyPair *keys.KeyPair) *Node {
 	chain := blockchain.NewBlockchain(keyPair)
-	cache := &BlockCache{}
-	server := NewApi(cache, relayReceivedBlocks(chain))
+	api := NewApi(eventBus(chain))
 	return &Node{
-		chain,
-		server,
-		cache,
+		chain: chain,
+		api:   api,
+		peers: make(map[string]bool),
 	}
 }
 
@@ -31,38 +30,56 @@ func NewNode(keyPair *keys.KeyPair) *Node {
 func (n *Node) Start() {
 	if seedHost, ok := os.LookupEnv("CRYPTO_SEED_HOST"); ok {
 		log.Println("Syncing blockchain via", seedHost)
+		n.greetPeer(seedHost)
 		n.syncBlockchain(seedHost)
 	}
 	n.mine()
 	n.api.Serve()
 }
 
-func (n *Node) syncBlockchain(seedHost string) {
-	client := NodeClient{seedHost}
+func (n *Node) greetPeer(peerAddress string) {
+	client := NodeClient{peerAddress}
+	if err := client.Greet(); err != nil {
+		log.Printf("Failed to greet %s: %v\n", client, err)
+		return
+	}
+	n.peers[peerAddress] = true
+}
+
+func (n *Node) syncBlockchain(peer string) {
+	client := NodeClient{peer}
 	blocks, err := client.GetBlocks()
 	if err != nil {
-		log.Fatalln("Failed to read blocks from seed host:", err)
+		log.Fatalln("Failed to read blocks from peer:", err)
 	}
 	for _, block := range blocks {
 		n.chain.SubmitExternalBlock(&block)
 	}
 }
 
-func relayReceivedBlocks(chain *blockchain.Blockchain) chan<- blockchain.Block {
-	blocks := make(chan blockchain.Block)
+func eventBus(chain *blockchain.Blockchain) chan<- interface{} {
+	events := make(chan interface{})
 	go func() {
-		for block := range blocks {
-			chain.SubmitExternalBlock(&block)
+		for event := range events {
+			switch e := event.(type) {
+			case NewBlock:
+				chain.SubmitExternalBlock(&e.Block)
+			case NewPeer:
+				log.Println("Notified of new peer", e.Address)
+			default:
+				log.Fatalf("Received an unknown event: %v\n", event)
+
+			}
 		}
 	}()
-	return blocks
+	return events
 }
 
 func (n *Node) mine() {
 	go func() {
 		for {
 			block := n.chain.MineBlock()
-			n.cache.AddBlock(block)
+			n.api.updateCache(block)
 		}
 	}()
 }
