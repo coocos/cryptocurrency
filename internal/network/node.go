@@ -30,7 +30,7 @@ func NewNode(keyPair *keys.KeyPair) *Node {
 
 // Start starts the node
 func (n *Node) Start() {
-	if seedHost, ok := os.LookupEnv("CRYPTO_SEED_HOST"); ok {
+	if seedHost, ok := os.LookupEnv("NODE_SEED_HOST"); ok {
 		log.Println("Syncing blockchain via", seedHost)
 		n.peers.Add(seedHost)
 		blocks, err := n.peers.GetBlocks(seedHost)

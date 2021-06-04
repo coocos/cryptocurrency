@@ -24,7 +24,7 @@ func NewApi(events chan<- interface{}) *Api {
 }
 
 func getBindHost() string {
-	if nodeHost, ok := os.LookupEnv("CRYPTO_NODE_HOST"); ok {
+	if nodeHost, ok := os.LookupEnv("NODE_BIND_HOST"); ok {
 		return nodeHost
 	}
 	return "localhost:8000"

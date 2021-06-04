@@ -53,7 +53,7 @@ func (c *NodeClient) SendBlock(block blockchain.Block) error {
 
 // Greet sends a greeting to peer node
 func (c *NodeClient) Greet() error {
-	greeting := NewPeer{os.Getenv("CRYPTO_NODE_HOST")}
+	greeting := NewPeer{os.Getenv("NODE_BIND_HOST")}
 	payload, err := json.Marshal(greeting)
 	if err != nil {
 		return err
