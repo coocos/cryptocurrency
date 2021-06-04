@@ -49,11 +49,19 @@ func (p *Peers) GetBlocks(address string) ([]blockchain.Block, error) {
 func (p *Peers) BroadcastBlock(block blockchain.Block) {
 	p.RLock()
 	defer p.RUnlock()
+
+	done := make(chan bool)
 	for host := range p.hosts {
-		client := NodeClient{host}
-		err := client.SendBlock(block)
-		if err != nil {
-			log.Printf("Failed to broadcast block to %s: %v\n", host, err)
-		}
+		go func(host string, block blockchain.Block, done chan<- bool) {
+			client := NodeClient{host}
+			err := client.SendBlock(block)
+			if err != nil {
+				log.Printf("Failed to broadcast block to %s: %v\n", host, err)
+			}
+			done <- true
+		}(host, block, done)
+	}
+	for range p.hosts {
+		<-done
 	}
 }
