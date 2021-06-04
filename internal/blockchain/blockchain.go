@@ -155,9 +155,6 @@ func (b *Blockchain) MineBlock() Block {
 				log.Fatalf("Failed to add internally generated block to blockchain: %v\n", err)
 			}
 			log.Printf("🎉 Found valid block: %+v\n", block)
-			for _, transaction := range block.Transactions {
-				log.Printf("💰 %v\n", transaction)
-			}
 			return *b.LastBlock()
 		// No valid block found yet so keep sending nonces to workers
 		default:

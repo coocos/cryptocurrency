@@ -10,15 +10,15 @@ import (
 // Peers contains all the peers a node knows about
 type Peers struct {
 	sync.RWMutex
-	peers map[string]bool
+	hosts map[string]bool
 }
 
-// Add adds a new peer and shakes hands with it
+// Add adds a new peer node and shakes hands with it
 func (p *Peers) Add(address string) {
 	p.Lock()
 	defer p.Unlock()
 
-	if _, ok := p.peers[address]; ok {
+	if _, ok := p.hosts[address]; ok {
 		return
 	}
 
@@ -27,13 +27,13 @@ func (p *Peers) Add(address string) {
 		log.Printf("Peer failed to respond, dropping it: %v\n", err)
 		return
 	}
-	if p.peers == nil {
-		p.peers = make(map[string]bool)
+	if p.hosts == nil {
+		p.hosts = make(map[string]bool)
 	}
-	p.peers[address] = true
+	p.hosts[address] = true
 }
 
-// GetBlocks gets all blocks from peer
+// GetBlocks gets all blocks from peer node
 func (p *Peers) GetBlocks(address string) ([]blockchain.Block, error) {
 	p.RLock()
 	defer p.RUnlock()
@@ -43,4 +43,17 @@ func (p *Peers) GetBlocks(address string) ([]blockchain.Block, error) {
 		return []blockchain.Block{}, err
 	}
 	return blocks, nil
+}
+
+// BroadcastBlock sends block to all known peer ndoes
+func (p *Peers) BroadcastBlock(block blockchain.Block) {
+	p.RLock()
+	defer p.RUnlock()
+	for host := range p.hosts {
+		client := NodeClient{host}
+		err := client.SendBlock(block)
+		if err != nil {
+			log.Printf("Failed to broadcast block to %s: %v\n", host, err)
+		}
+	}
 }

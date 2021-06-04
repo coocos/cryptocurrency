@@ -9,13 +9,14 @@ A simple cryptocurrency built out of curiosity.
 - signed transactions using Ed25519
 - miners are rewarded with a coinbase transaction per block
 - balance based account model
+- peer-to-peer networking on top of HTTP
 
 ## Limitations
 
-- no peer-to-peer networking (the blockchain is currenly mined by a single node)
 - no transaction rewards (miners have no incentive to include transactions in blocks)
 - no difficulty scaling (increasing amount of mining nodes will lead to rapid inflation)
 - transactions vulnerable to replay attacks
+- peer-to-peer communication is unencrypted
 
 ## Running
 

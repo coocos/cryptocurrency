@@ -35,7 +35,7 @@ func (n *Node) Start() {
 		n.peers.Add(seedHost)
 		blocks, err := n.peers.GetBlocks(seedHost)
 		if err != nil {
-			log.Println("Failed to sync blocks from seed node:", err)
+			log.Println("Failed to sync blockchain using seed node:", err)
 		} else {
 			for _, block := range blocks {
 				n.chain.SubmitExternalBlock(&block)
@@ -70,6 +70,7 @@ func (n *Node) mine() {
 		for {
 			block := n.chain.MineBlock()
 			n.api.updateCache(block)
+			n.peers.BroadcastBlock(block)
 		}
 	}()
 }

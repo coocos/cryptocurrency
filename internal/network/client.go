@@ -19,7 +19,7 @@ func (c *NodeClient) apiUrl(resource string) string {
 	return fmt.Sprintf("http://%s/api/v1%s", c.peerAddress, resource)
 }
 
-// GetBlocks requests all blocks from peer node
+// GetBlocks requests all known blocks from peer node
 func (c *NodeClient) GetBlocks() ([]blockchain.Block, error) {
 	response, err := http.Get(c.apiUrl("/blockchain/"))
 	if err != nil {
@@ -31,6 +31,24 @@ func (c *NodeClient) GetBlocks() ([]blockchain.Block, error) {
 		return nil, err
 	}
 	return blocks, nil
+}
+
+// SendBlock sends block to peer node
+func (c *NodeClient) SendBlock(block blockchain.Block) error {
+	newBlock := NewBlock{block}
+	payload, err := json.Marshal(newBlock)
+	if err != nil {
+		return err
+	}
+	response, err := http.Post(c.apiUrl("/block/"), "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusAccepted {
+		return fmt.Errorf("Failed to broadcast block to %s: %v", c.peerAddress, response.StatusCode)
+	}
+	return nil
 }
 
 // Greet sends a greeting to peer node
