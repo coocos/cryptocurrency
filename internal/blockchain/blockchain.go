@@ -71,13 +71,12 @@ func (b *Blockchain) AddTransaction(transaction Transaction) error {
 
 func (b *Blockchain) filterValidTransactions() []Transaction {
 	validTransactions := make([]Transaction, 0)
-	accounts := ReadAccounts(b)
+	accounts := ReadAccounts(b.blocks)
 	for _, transaction := range b.pool {
-		if err := accounts.Subtract(transaction.Sender, transaction.Amount); err != nil {
-			log.Printf("Rejecting transaction: %v\n", transaction)
+		if err := accounts.ApplyTransaction(transaction); err != nil {
+			log.Println("Transaction is invalid", err)
 			continue
 		}
-		accounts.Add(transaction.Receiver, transaction.Amount)
 		validTransactions = append(validTransactions, transaction)
 		if len(validTransactions) == maxTransactionsPerBlock-1 {
 			break
@@ -93,12 +92,7 @@ func (b *Blockchain) clearSpentTransactions() {
 }
 
 func (b *Blockchain) transactionsForNextBlock() []Transaction {
-	coinbaseTransaction := Transaction{
-		Sender:   nil,
-		Receiver: b.keyPair.PublicKey,
-		Amount:   10,
-	}
-	return append([]Transaction{coinbaseTransaction}, b.filterValidTransactions()...)
+	return append([]Transaction{CoinbaseTransactionTo(b.keyPair.PublicKey)}, b.filterValidTransactions()...)
 }
 
 // ProofOfWorkRequest is a request to mine a new block

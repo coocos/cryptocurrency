@@ -48,7 +48,7 @@ func TestBlockChain(t *testing.T) {
 		chain.MineBlock()
 
 		// Mine next block to send coins from miner to receiver
-		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5)
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5, 1)
 		transaction.Sign(miner.PrivateKey)
 		if err := chain.AddTransaction(*transaction); err != nil {
 			t.Errorf("Failed to add transaction to blockchain: %v", err)
@@ -67,7 +67,7 @@ func TestBlockChain(t *testing.T) {
 		chain.MineBlock()
 
 		// Mine next block to send coins from miner to receiver
-		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 15)
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 15, 1)
 		transaction.Sign(miner.PrivateKey)
 		if err := chain.AddTransaction(*transaction); err != nil {
 			t.Errorf("Failed to add transaction to blockchain: %v", err)
@@ -83,7 +83,7 @@ func TestBlockChain(t *testing.T) {
 		chain.MineBlock()
 
 		// Mine next block to send coins from miner to receiver
-		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5)
+		transaction := NewTransaction(miner.PublicKey, receiver.PublicKey, 5, 1)
 		transaction.Sign(miner.PrivateKey)
 		if err := chain.AddTransaction(*transaction); err != nil {
 			t.Errorf("Failed to add transaction to blockchain: %v", err)

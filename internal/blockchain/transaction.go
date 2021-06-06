@@ -7,11 +7,16 @@ import (
 	"fmt"
 )
 
+const (
+	CoinbaseTransactionAmount = 10
+)
+
 // Transaction represents an individual transaction
 type Transaction struct {
 	Sender    []byte `json:"sender"`
 	Receiver  []byte `json:"receiver"`
 	Amount    uint   `json:"amount"`
+	Nonce     uint   `json:"nonce"`
 	Signature []byte `json:"signature"`
 }
 
@@ -26,11 +31,12 @@ func (t Transaction) String() string {
 }
 
 // NewTransaction returns a new unsigned transaction
-func NewTransaction(sender []byte, receiver []byte, amount uint) *Transaction {
+func NewTransaction(sender ed25519.PublicKey, receiver ed25519.PublicKey, amount uint, nonce uint) *Transaction {
 	return &Transaction{
 		sender,
 		receiver,
 		amount,
+		nonce,
 		nil,
 	}
 }
@@ -42,6 +48,7 @@ func (t *Transaction) Bytes() ([]byte, error) {
 		Sender:   t.Sender,
 		Receiver: t.Receiver,
 		Amount:   t.Amount,
+		Nonce:    t.Nonce,
 	}
 
 	bytes, err := json.Marshal(copy)
@@ -64,7 +71,7 @@ func (t *Transaction) Sign(privateKey ed25519.PrivateKey) ([]byte, error) {
 
 // IsCoinBase tells whether the transaction is a coinbase transaction
 func (t *Transaction) IsCoinbase() bool {
-	return t.Sender == nil && t.Receiver != nil && t.Amount == 10
+	return t.Sender == nil && t.Receiver != nil && t.Amount == CoinbaseTransactionAmount
 }
 
 // ValidSignature indicates whether the transaction signature is valid
@@ -79,4 +86,13 @@ func (t *Transaction) ValidSignature() bool {
 		return false
 	}
 	return ed25519.Verify(t.Sender, bytes, t.Signature)
+}
+
+// CoinbaseTransaction contructs a coinbase transaction
+func CoinbaseTransactionTo(receiver ed25519.PublicKey) Transaction {
+	return Transaction{
+		Sender:   nil,
+		Receiver: receiver,
+		Amount:   CoinbaseTransactionAmount,
+	}
 }

@@ -16,7 +16,6 @@ A simple cryptocurrency built out of curiosity.
 - no transaction rewards (miners have no incentive to include transactions in blocks)
 - no difficulty scaling (increasing amount of mining nodes will lead to rapid inflation)
 - forks are not resolved (nodes just keep accepting valid blocks ad infinitum)
-- transactions vulnerable to replay attacks
 - peer-to-peer communication is unencrypted
 - blockchain is not persisted to disk
 
