@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 const (
@@ -13,11 +14,12 @@ const (
 
 // Transaction represents an individual transaction
 type Transaction struct {
-	Sender    []byte `json:"sender"`
-	Receiver  []byte `json:"receiver"`
-	Amount    uint   `json:"amount"`
-	Nonce     uint   `json:"nonce"`
-	Signature []byte `json:"signature"`
+	Sender    []byte    `json:"sender"`
+	Receiver  []byte    `json:"receiver"`
+	Amount    uint      `json:"amount"`
+	Nonce     uint      `json:"nonce"`
+	Time      time.Time `json:"time"`
+	Signature []byte    `json:"signature"`
 }
 
 // String returns the string representation of a transaction
@@ -37,6 +39,7 @@ func NewTransaction(sender ed25519.PublicKey, receiver ed25519.PublicKey, amount
 		receiver,
 		amount,
 		nonce,
+		time.Now().UTC(),
 		nil,
 	}
 }
@@ -49,6 +52,7 @@ func (t *Transaction) Bytes() ([]byte, error) {
 		Receiver: t.Receiver,
 		Amount:   t.Amount,
 		Nonce:    t.Nonce,
+		Time:     t.Time,
 	}
 
 	bytes, err := json.Marshal(copy)
@@ -94,5 +98,6 @@ func CoinbaseTransactionTo(receiver ed25519.PublicKey) Transaction {
 		Sender:   nil,
 		Receiver: receiver,
 		Amount:   CoinbaseTransactionAmount,
+		Time:     time.Now().UTC(),
 	}
 }
