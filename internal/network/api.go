@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/coocos/cryptocurrency/internal/blockchain"
+	"github.com/coocos/cryptocurrency/internal/config"
 )
 
 // Api runs the HTTP API for interacting with the node
@@ -21,13 +21,6 @@ func NewApi(events chan<- interface{}) *Api {
 		&BlockCache{},
 		events,
 	}
-}
-
-func getBindHost() string {
-	if nodeHost, ok := os.LookupEnv("NODE_BIND_HOST"); ok {
-		return nodeHost
-	}
-	return "localhost:8000"
 }
 
 func (a *Api) updateCache(block blockchain.Block) {
@@ -93,7 +86,7 @@ func (a *Api) Serve() error {
 		a.events <- peer
 		w.Write(nil)
 	})
-	bindHost := getBindHost()
+	bindHost := config.BindHost()
 	log.Println("Listening for API requests at", bindHost)
 	return http.ListenAndServe(bindHost, nil)
 }

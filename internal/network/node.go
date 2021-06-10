@@ -2,9 +2,9 @@ package network
 
 import (
 	"log"
-	"os"
 
 	"github.com/coocos/cryptocurrency/internal/blockchain"
+	"github.com/coocos/cryptocurrency/internal/config"
 	"github.com/coocos/cryptocurrency/internal/keys"
 )
 
@@ -31,7 +31,7 @@ func NewNode(keyPair *keys.KeyPair) *Node {
 // Start starts the node
 func (n *Node) Start() {
 	n.serve()
-	if seedHost, ok := os.LookupEnv("NODE_SEED_HOST"); ok {
+	if seedHost, ok := config.SeedHost(); ok {
 		log.Println("Syncing blockchain via", seedHost)
 		n.peers.Add(seedHost)
 		blocks, err := n.peers.GetBlocks(seedHost)

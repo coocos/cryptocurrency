@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/coocos/cryptocurrency/internal/blockchain"
+	"github.com/coocos/cryptocurrency/internal/config"
 )
 
 // NodeClient is an HTTP client used to communicate with a node
@@ -53,7 +53,7 @@ func (c *NodeClient) SendBlock(block blockchain.Block) error {
 
 // Greet sends a greeting to peer node
 func (c *NodeClient) Greet() error {
-	greeting := NewPeer{os.Getenv("NODE_BIND_HOST")}
+	greeting := NewPeer{config.AdvertisedHost()}
 	payload, err := json.Marshal(greeting)
 	if err != nil {
 		return err
