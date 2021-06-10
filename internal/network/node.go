@@ -30,6 +30,7 @@ func NewNode(keyPair *keys.KeyPair) *Node {
 
 // Start starts the node
 func (n *Node) Start() {
+	n.serve()
 	if seedHost, ok := os.LookupEnv("NODE_SEED_HOST"); ok {
 		log.Println("Syncing blockchain via", seedHost)
 		n.peers.Add(seedHost)
@@ -43,7 +44,6 @@ func (n *Node) Start() {
 		}
 	}
 	n.mine()
-	n.api.Serve()
 }
 
 func eventBus(chain *blockchain.Blockchain, peers *Peers) chan<- interface{} {
@@ -65,12 +65,18 @@ func eventBus(chain *blockchain.Blockchain, peers *Peers) chan<- interface{} {
 	return events
 }
 
-func (n *Node) mine() {
+func (n *Node) serve() {
 	go func() {
-		for {
-			block := n.chain.MineBlock()
-			n.api.updateCache(block)
-			n.peers.BroadcastBlock(block)
+		if err := n.api.Serve(); err != nil {
+			log.Fatalln("API serving failed:", err)
 		}
 	}()
+}
+
+func (n *Node) mine() {
+	for {
+		block := n.chain.MineBlock()
+		n.api.updateCache(block)
+		n.peers.BroadcastBlock(block)
+	}
 }

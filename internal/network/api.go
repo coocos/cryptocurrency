@@ -35,7 +35,7 @@ func (a *Api) updateCache(block blockchain.Block) {
 }
 
 // Serve starts the API
-func (a *Api) Serve() {
+func (a *Api) Serve() error {
 	// Returns blocks from the blockchain
 	http.HandleFunc("/api/v1/blockchain/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -95,5 +95,5 @@ func (a *Api) Serve() {
 	})
 	bindHost := getBindHost()
 	log.Println("Listening for API requests at", bindHost)
-	http.ListenAndServe(bindHost, nil)
+	return http.ListenAndServe(bindHost, nil)
 }
