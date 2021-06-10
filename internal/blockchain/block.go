@@ -24,6 +24,7 @@ type Block struct {
 
 const (
 	maxTransactionsPerBlock = 64
+	baseDifficulty          = 20
 )
 
 // String returns the string representation of a block
@@ -90,5 +91,5 @@ func (b *Block) IsValid(previous *Block) bool {
 	if !bytes.Equal(b.Hash, b.ComputeHash()) {
 		return false
 	}
-	return bits.LeadingZeros64(binary.BigEndian.Uint64(b.Hash)) > 16
+	return bits.LeadingZeros64(binary.BigEndian.Uint64(b.Hash)) > baseDifficulty
 }
