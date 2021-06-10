@@ -63,6 +63,22 @@ func (a *Api) Serve() {
 		a.events <- block
 		w.WriteHeader(http.StatusAccepted)
 	})
+	http.HandleFunc("/api/v1/accounts/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		blocks := []*blockchain.Block{}
+		for block := range a.cache.ReadBlocks() {
+			blocks = append(blocks, &block)
+		}
+		accounts := blockchain.AccountsFromBlockchain(blocks).ListAccounts()
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(accounts)
+		if err != nil {
+			log.Println("Failed to serialize accounts", err)
+		}
+	})
 	// Receives notifications of new peer nodes
 	http.HandleFunc("/api/v1/peer/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

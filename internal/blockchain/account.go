@@ -9,8 +9,9 @@ import (
 
 // Account holds coins and an incrementing nonce
 type Account struct {
-	Nonce   uint
-	Balance uint
+	Address ed25519.PublicKey `json:"address"`
+	Nonce   uint              `json:"nonce"`
+	Balance uint              `json:"balance"`
 }
 
 // Accounts represents all the accounts within the blockchain
@@ -23,7 +24,7 @@ func NewAccounts() *Accounts {
 	return &Accounts{make(map[string]*Account)}
 }
 
-// Read returns the given account or an error if the account is unknown
+// Read returns the account matching the address or an error if the account is unknown
 func (a *Accounts) Read(address ed25519.PublicKey) (*Account, error) {
 	accountId := base64.StdEncoding.EncodeToString(address)
 	account, exists := a.accounts[accountId]
@@ -31,6 +32,15 @@ func (a *Accounts) Read(address ed25519.PublicKey) (*Account, error) {
 		return nil, fmt.Errorf("Account %s does not exist", accountId)
 	}
 	return account, nil
+}
+
+// ListAccounts returns all known accounts
+func (a *Accounts) ListAccounts() []Account {
+	accounts := make([]Account, len(a.accounts))
+	for _, account := range a.accounts {
+		accounts = append(accounts, *account)
+	}
+	return accounts
 }
 
 // ApplyTransaction applies the transaction if it's valid
@@ -47,8 +57,8 @@ func (a *Accounts) ApplyTransaction(transaction Transaction) error {
 	return nil
 }
 
-// ReadAccounts generates the current account states from the blockchain
-func ReadAccounts(blocks []*Block) *Accounts {
+// AccountsFromBlockchain generates the current account states from the blockchain
+func AccountsFromBlockchain(blocks []*Block) *Accounts {
 	accounts := NewAccounts()
 	for _, block := range blocks {
 		for _, transaction := range block.Transactions {
@@ -63,6 +73,7 @@ func (a *Accounts) add(address ed25519.PublicKey, amount uint) {
 	account, exists := a.accounts[accountId]
 	if !exists {
 		a.accounts[accountId] = &Account{
+			Address: address,
 			Balance: amount,
 			Nonce:   0,
 		}

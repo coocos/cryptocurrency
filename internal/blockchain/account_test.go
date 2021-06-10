@@ -78,7 +78,7 @@ func TestAccount(t *testing.T) {
 		chain := NewBlockchain(miner)
 
 		chain.MineBlock()
-		accounts := ReadAccounts(chain.blocks)
+		accounts := AccountsFromBlockchain(chain.blocks)
 		account, err := accounts.Read(miner.PublicKey)
 		if err != nil {
 			t.Error("Failed to read accounts from blockchain:", err)

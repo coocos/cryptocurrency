@@ -71,7 +71,7 @@ func (b *Blockchain) AddTransaction(transaction Transaction) error {
 
 func (b *Blockchain) filterValidTransactions() []Transaction {
 	validTransactions := make([]Transaction, 0)
-	accounts := ReadAccounts(b.blocks)
+	accounts := AccountsFromBlockchain(b.blocks)
 	for _, transaction := range b.pool {
 		if err := accounts.ApplyTransaction(transaction); err != nil {
 			log.Println("Transaction is invalid", err)
